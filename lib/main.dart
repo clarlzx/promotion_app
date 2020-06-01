@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:promotionapp/calendar.dart';
 
 void main() => runApp(MyApp());
 
@@ -21,11 +22,22 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  static List<Widget> titles = <Widget>[Text('All Promotions'), Text('Promotion Calendar')];
+
   @override
   Widget build(BuildContext context) {
+    List<Widget> options = <Widget>[_buildBody(context), Calendar()];
     return Scaffold(
-      appBar: AppBar(title: Text('All Promotions')),
-      body: _buildBody(context),
+      appBar: AppBar(title: titles.elementAt(_selectedIndex)),
+      body: options.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>
           [
@@ -38,6 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text('Calendar'),
           )
         ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         selectedItemColor: Colors.lightBlue,
       ),
     );
