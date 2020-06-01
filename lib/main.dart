@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:promotionapp/calendar.dart';
 import 'package:flutter/painting.dart';
 
 void main() => runApp(MyApp());
@@ -22,6 +23,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
 
   Icon customIcon = Icon(Icons.search, color: Colors.white);
@@ -29,15 +38,8 @@ class _MyHomePageState extends State<MyHomePage> {
       alignment: Alignment(-1.3, 0.0),
       child: Text('View Promotions')
   );
-
-//  Widget customSearchBar = Align(
-//    alignment: Alignment(-1.3, 0.0),
-//    child: Text('View Promotions'),
-//  ); //change title to this
-
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+  
+  Widget mainWidget = AppBar(
         leading: IconButton(
           icon: Icon(
             Icons.format_list_bulleted,
@@ -50,8 +52,20 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: customIcon,
           )
         ],
-      ),
-      body: _buildBody(context),
+      );
+  
+  static List<Widget> titles = <Widget>[mainWidget , Text('Promotion Calendar')];
+
+//  Widget customSearchBar = Align(
+//    alignment: Alignment(-1.3, 0.0),
+//    child: Text('View Promotions'),
+//  ); //change title to this
+
+  Widget build(BuildContext context) {
+    List<Widget> options = <Widget>[_buildBody(context), Calendar()];
+    return Scaffold(
+appBar: AppBar(title: titles.elementAt(_selectedIndex)),
+      body: _options.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>
         [
@@ -64,6 +78,8 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text('Calendar'),
           )
         ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         selectedItemColor: Colors.lightBlue,
       ),
     );
