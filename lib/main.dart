@@ -39,31 +39,28 @@ class _MyHomePageState extends State<MyHomePage> {
 //      child: Text('View Promotions')
 //  );
   
-  Widget mainWidget = AppBar(
-        leading: IconButton(
-          icon: Icon(
-            Icons.format_list_bulleted,
-            color: Colors.white,
-          ),
-        ),
-        title: Align(
-          alignment: Alignment(-1.3,0.0),
-          child: Text('View Promotions')
-        ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.search,
-            color: Colors.white),
-          )
-        ],
-      );
-
-//  Widget customSearchBar = Align(
-//    alignment: Alignment(-1.3, 0.0),
-//    child: Text('View Promotions'),
-//  ); //change title to this
 
   Widget build(BuildContext context) {
+
+    Widget mainWidget = AppBar(
+      leading: IconButton(
+        icon: Icon(
+          Icons.format_list_bulleted,
+          color: Colors.white,
+        ),
+      ),
+      title: Align(
+          alignment: Alignment(-1.3,0.0),
+          child: Text('View Promotions')
+      ),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.search,
+              color: Colors.white),
+        )
+      ],
+    );
+
 
     List<Widget> titles = <Widget>[mainWidget , AppBar(title: Text('Promotion Calendar'))];
     List<Widget> options = <Widget>[_buildBody(context), Calendar()];
@@ -219,19 +216,25 @@ class _MyHomePageState extends State<MyHomePage> {
 class Promotion {
   final String title;
   final Company company;
+  final String start_date;
+  final String end_date;
   final DocumentReference reference;
 
   Promotion.fromMap(Map<String, dynamic> map, {this.reference})
       : assert(map['title'] != null),
         assert(map['company'] != null),
+        assert(map['start_date'] != null),
+        assert(map['end_date'] != null),
         title = map['title'],
-        company = new Company(map['company']);
+        company = new Company(map['company']),
+        start_date = map['start_date'],
+        end_date = map['end_date'];
 
   Promotion.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data, reference: snapshot.reference);
 
   @override
-  String toString() => "Promotion<$title:$company>";
+  String toString() => "Promotion<$title>";
 }
 
 class Company {
