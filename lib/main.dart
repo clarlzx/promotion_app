@@ -33,11 +33,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
 
-  Icon customIcon = Icon(Icons.search, color: Colors.white);
-  Widget customWidget = Align(
-      alignment: Alignment(-1.3, 0.0),
-      child: Text('View Promotions')
-  );
+//  Icon customIcon = Icon(Icons.search, color: Colors.white);
+//  Widget customWidget = Align(
+//      alignment: Alignment(-1.3, 0.0),
+//      child: Text('View Promotions')
+//  );
   
   Widget mainWidget = AppBar(
         leading: IconButton(
@@ -46,15 +46,17 @@ class _MyHomePageState extends State<MyHomePage> {
             color: Colors.white,
           ),
         ),
-        title: customWidget,
+        title: Align(
+          alignment: Alignment(-1.3,0.0),
+          child: Text('View Promotions')
+        ),
         actions: <Widget>[
           IconButton(
-            icon: customIcon,
+            icon: Icon(Icons.search,
+            color: Colors.white),
           )
         ],
       );
-  
-  static List<Widget> titles = <Widget>[mainWidget , Text('Promotion Calendar')];
 
 //  Widget customSearchBar = Align(
 //    alignment: Alignment(-1.3, 0.0),
@@ -62,10 +64,13 @@ class _MyHomePageState extends State<MyHomePage> {
 //  ); //change title to this
 
   Widget build(BuildContext context) {
+
+    List<Widget> titles = <Widget>[mainWidget , AppBar(title: Text('Promotion Calendar'))];
     List<Widget> options = <Widget>[_buildBody(context), Calendar()];
+
     return Scaffold(
-appBar: AppBar(title: titles.elementAt(_selectedIndex)),
-      body: _options.elementAt(_selectedIndex),
+      appBar: titles.elementAt(_selectedIndex),
+      body: options.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>
         [

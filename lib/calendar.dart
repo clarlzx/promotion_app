@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         'Event C5'
       ],
       _selectedDay.subtract(Duration(days: 2)): ['Event A6', 'Event B6'],
-      _selectedDay: ['Event A7', 'Event B7', 'Event C7', 'Event D7'],
+      _selectedDay: ["1 for 1 Ben and Jerry's", r"$2 off Starbucks Delivery"],
       _selectedDay.add(Duration(days: 1)): [
         'Event A8',
         'Event B8',
