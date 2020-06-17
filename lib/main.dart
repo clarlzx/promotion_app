@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:promotionapp/calendar.dart';
 import 'package:flutter/painting.dart';
 
-void main() => runApp(MyApp());
+//void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
@@ -11,6 +11,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'View Promotions',
       home: MyHomePage(),
+      routes: {
+        ExtractPromoDetails.routeName: (context) => ExtractPromoDetails(),
+      },
     );
   }
 }
@@ -31,32 +34,45 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  Icon customIcon = Icon(Icons.search, color: Colors.white);
+  Widget customWidget = Text('View Promotions');
+
   @override
-
-//  Icon customIcon = Icon(Icons.search, color: Colors.white);
-//  Widget customWidget = Align(
-//      alignment: Alignment(-1.3, 0.0),
-//      child: Text('View Promotions')
-//  );
-  
-
   Widget build(BuildContext context) {
 
+    GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
     Widget mainWidget = AppBar(
+      title: customWidget,
       leading: IconButton(
         icon: Icon(
-          Icons.format_list_bulleted,
-          color: Colors.white,
+            Icons.filter_list,
+            color: Colors.white
         ),
-      ),
-      title: Align(
-          alignment: Alignment(-1.3,0.0),
-          child: Text('View Promotions')
+        onPressed: () {
+          _scaffoldKey.currentState.openDrawer();
+        }
       ),
       actions: <Widget>[
         IconButton(
-          icon: Icon(Icons.search,
-              color: Colors.white),
+          onPressed: () {
+            setState(() {
+              if (this.customIcon.icon == Icons.search) {
+                this.customIcon = Icon(Icons.cancel, color: Colors.white);
+                this.customWidget = TextField(
+                  textInputAction: TextInputAction.go,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.0,
+                  ),
+                );
+              } else {
+                this.customIcon = Icon(Icons.search, color: Colors.white);
+                this.customWidget = Text('View Promotions');
+              }
+            });
+          },
+          icon: customIcon,
         )
       ],
     );
@@ -66,8 +82,28 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> options = <Widget>[_buildBody(context), Calendar()];
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: titles.elementAt(_selectedIndex),
       body: options.elementAt(_selectedIndex),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Text('Drawer Header'),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey,
+              ),
+            ),
+            ListTile(
+              title: Text('Item 1'),
+            ),
+            ListTile(
+              title: Text('Item 2'),
+            )
+          ],
+        )
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>
         [
@@ -160,6 +196,13 @@ class _MyHomePageState extends State<MyHomePage> {
     final promotion = Promotion.fromSnapshot(data);
 
     return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          ExtractPromoDetails.routeName,
+          arguments: promotion,
+        );
+      },
       child: Padding(
         key: ValueKey(promotion.title),
         padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 8.0),
@@ -213,12 +256,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class Promotion {
+class Promotion{
   final String title;
   final Company company;
   final String start_date;
   final String end_date;
-  final DocumentReference reference;
+  DocumentReference reference;
+
+  Promotion(this.title, this.company, this.start_date, this.end_date);
 
   Promotion.fromMap(Map<String, dynamic> map, {this.reference})
       : assert(map['title'] != null),
@@ -233,18 +278,130 @@ class Promotion {
   Promotion.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data, reference: snapshot.reference);
 
-  @override
-  String toString() => "Promotion<$title>";
 }
 
 class Company {
   final String companyID;
+  String name;
+  List locations;
+  String logoURL;
 
   Company(companyID) : this.companyID = companyID;
 
   Future<String> getLogoUrl() async {
     return await Firestore.instance.collection('all_companies').document(this.companyID).get().then((DocumentSnapshot ds) {
-      return ds.data["logoURL"];});
+      this.name = ds.data["name"];
+      this.locations = ds.data["locations"];
+      this.logoURL = ds.data["logoURL"];
+      return this.logoURL;});
   }
 
 }
+
+class ExtractPromoDetails extends StatelessWidget{
+  static const routeName = '/extractArguments';
+
+  @override
+  Widget build(BuildContext context) {
+    final Promotion args = ModalRoute.of(context).settings.arguments;
+    return Scaffold(
+      appBar: AppBar(
+        actions: <Widget>[
+          IconButton(
+            //EDIT HERE FOR ADD
+            icon: Icon(Icons.add,
+              color: Colors.white
+            )
+          ),
+          IconButton(
+            icon: Icon(Icons.share,
+            color: Colors.white
+            )
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Align(
+          alignment: Alignment.center,
+          child: Container(
+            width: 350,
+            child: Column(
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text(
+                    args.title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    )
+                  )
+                ),
+                Card(
+                  elevation: 10.0,
+                  child: Container(
+                    width: 350,
+                    child: Image(
+                      image: NetworkImage(args.company.logoURL),
+                      fit: BoxFit.fitWidth,
+                    )
+                  )
+                ),
+                Padding(
+                  padding: EdgeInsets.all(10.0),
+                ),
+                Align(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(fontSize: 19.0, color: Colors.black),
+                          children: <TextSpan>[
+                            TextSpan(text: 'Company: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: args.company.name),
+                          ],
+                        ),
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(fontSize: 19.0, color: Colors.black),
+                          children: <TextSpan>[
+                            TextSpan(text: 'Dates: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: args.start_date + ' - ' + args.end_date),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        'Locations:',
+                        style: TextStyle(fontSize: 19.0, color: Colors.black, fontWeight: FontWeight.bold)
+                      ),
+                      for (String location in args.company.locations)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              "• ",
+                              style: TextStyle(fontSize: 16.0)
+                            ),
+                            Expanded(
+                              child: Text(
+                                location,
+                                style: TextStyle(fontSize: 16.0)
+                              ),
+                            )
+                          ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          )
+        )
+      )
+    );
+  }
+}
+
