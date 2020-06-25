@@ -1,16 +1,36 @@
+import 'dart:collection';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:promotionapp/calendar.dart';
 import 'package:flutter/painting.dart';
-
-//void main() => runApp(MyApp());
+import 'package:rxdart/rxdart.dart';
+import 'searchbar.dart';
 
 class MyApp extends StatelessWidget {
+  final PromotionBloc bloc;
+
+  MyApp({Key key, this.bloc}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'View Promotions',
-      home: MyHomePage(),
+      theme: ThemeData(
+        // Define the default brightness and colors.
+        brightness: Brightness.dark,
+        primaryColor: Colors.blue,
+        scaffoldBackgroundColor: Colors.grey[50],
+
+        // Define the default font family
+        // fontFamily: 'Roboto',
+
+        // Define the default TextTheme. Use this to specify the default
+        // text styling for headlines, titles, bodies of text, and more.
+      ),
+      home: MyHomePage(
+        bloc: bloc
+      ),
       routes: {
         ExtractPromoDetails.routeName: (context) => ExtractPromoDetails(),
       },
@@ -19,6 +39,11 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+
+  final PromotionBloc bloc;
+
+  MyHomePage({Key key, this.bloc}) : super(key: key);
+
   @override
   _MyHomePageState createState() {
     return _MyHomePageState();
@@ -56,21 +81,30 @@ class _MyHomePageState extends State<MyHomePage> {
       actions: <Widget>[
         IconButton(
           onPressed: () {
-            setState(() {
-              if (this.customIcon.icon == Icons.search) {
-                this.customIcon = Icon(Icons.cancel, color: Colors.white);
-                this.customWidget = TextField(
-                  textInputAction: TextInputAction.go,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.0,
-                  ),
-                );
-              } else {
-                this.customIcon = Icon(Icons.search, color: Colors.white);
-                this.customWidget = Text('View Promotions');
-              }
-            });
+            showSearch(
+                context: context,
+                delegate: PromotionSearch(widget.bloc.promotions)
+            );
+//FOR A SEARCH BAR THAT DOES NOT NAVIGATE TO A NEW PAGE
+//            setState(() {
+//              if (this.customIcon.icon == Icons.search) {
+//                this.customIcon = Icon(Icons.cancel, color: Colors.white);
+//                this.customWidget = TextField(
+//                  style: TextStyle(color: Colors.white),
+//                  decoration: new InputDecoration(
+//                    border: InputBorder.none,
+//                    hintText: 'Search...',
+//                    hintStyle: TextStyle(
+//                        fontSize: 18.0,
+//                        color: Colors.white60
+//                    ),
+//                  ),
+//                );
+//              } else {
+//                this.customIcon = Icon(Icons.search, color: Colors.white);
+//                this.customWidget = Text('View Promotions');
+//              }
+//            });
           },
           icon: customIcon,
         )
@@ -90,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             DrawerHeader(
-              child: Text('Drawer Header'),
+              child: Text('Filter'),
               decoration: BoxDecoration(
                 color: Colors.blueGrey,
               ),
@@ -105,6 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
         )
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>
         [
           BottomNavigationBarItem(
@@ -119,6 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         selectedItemColor: Colors.lightBlue,
+        unselectedItemColor: Colors.grey[900],
       ),
     );
   }
@@ -135,7 +171,9 @@ class _MyHomePageState extends State<MyHomePage> {
           alignment: Alignment(-0.89,0.0),
           child: Text(
             "Hot Deals",
-            style: TextStyle(fontSize: 20),
+            style: TextStyle(
+                color: Colors.black,
+                fontSize: 20),
           ),
         ),
         Container(
@@ -149,7 +187,10 @@ class _MyHomePageState extends State<MyHomePage> {
           alignment: Alignment(-0.89,0.0),
           child: Text(
             "New Deals",
-            style: TextStyle(fontSize: 20),
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20
+            ),
           ),
         ),
         Container(
@@ -163,7 +204,10 @@ class _MyHomePageState extends State<MyHomePage> {
           alignment: Alignment(-0.89,0.0),
           child: Text(
             "All Deals",
-            style: TextStyle(fontSize: 20),
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20
+            ),
           ),
         ),
         Container(
@@ -175,25 +219,24 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildSection(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection('all_promotions').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return LinearProgressIndicator();
-
-        return _buildList(context, snapshot.data.documents);
-      },
+    return StreamBuilder<UnmodifiableListView<Promotion>>(
+      stream: widget.bloc.promotions,
+      initialData: UnmodifiableListView<Promotion>([]),
+      builder: (context, snapshot) => ListView(
+        scrollDirection: Axis.horizontal,
+        children: snapshot.data.map(_buildListItem).toList(),
+      )
     );
   }
 
-  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-    return ListView(
-      scrollDirection: Axis.horizontal,
-      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
-    );
-  }
+//  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+//    return ListView(
+//      scrollDirection: Axis.horizontal,
+//      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
+//    );
+//  }
 
-  Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
-    final promotion = Promotion.fromSnapshot(data);
+  Widget _buildListItem(Promotion promotion) {
 
     return GestureDetector(
       onTap: () {
@@ -218,22 +261,32 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 183.0,
               child: Column(
                   children: <Widget>[
-                  FutureBuilder(
-                    future: promotion.company.getLogoUrl(),
-                    initialData: "",
-                    builder: (BuildContext context, AsyncSnapshot<String> text) {
-                      return new Container(
-                        height: 140.0,
-                        width: 140.0,
-                        decoration: new BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(text.data),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      );
-                    }
-                  ),
+                    Container(
+                      height: 140.0,
+                      width: 140.0,
+                      decoration: new BoxDecoration(
+                        image: DecorationImage(
+                          image: NetworkImage(promotion.company.logoURL),
+                          fit: BoxFit.fill,
+                        )
+                      ),
+                    ),
+//                  FutureBuilder(
+//                    future: promotion.company.getLogoUrl(),
+//                    initialData: "",
+//                    builder: (BuildContext context, AsyncSnapshot<String> text) {
+//                      return new Container(
+//                        height: 140.0,
+//                        width: 140.0,
+//                        decoration: new BoxDecoration(
+//                          image: DecorationImage(
+//                            image: NetworkImage(text.data),
+//                            fit: BoxFit.fill,
+//                          ),
+//                        ),
+//                      );
+//                    }
+//                  ),
                     Padding(
                       padding: EdgeInsets.all(3.0),
                     ),
@@ -244,6 +297,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         overflow: TextOverflow.ellipsis,
                         maxLines: 2,
                         textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black)
                       ),
                     ),
                   ]
@@ -256,46 +310,109 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class Promotion{
+//class Promotion{
+//  final String title;
+//  final Company company;
+//  final String start_date;
+//  final String end_date;
+//  DocumentReference reference;
+//
+//  Promotion(this.title, this.company, this.start_date, this.end_date);
+//
+//  Promotion.fromMap(Map<String, dynamic> map, {this.reference})
+//      : assert(map['title'] != null),
+//        assert(map['company'] != null),
+//        assert(map['start_date'] != null),
+//        assert(map['end_date'] != null),
+//        title = map['title'],
+//        company = new Company(map['company']),
+//        start_date = map['start_date'],
+//        end_date = map['end_date'];
+//
+//  Promotion.fromSnapshot(DocumentSnapshot snapshot)
+//      : this.fromMap(snapshot.data, reference: snapshot.reference);
+//
+//}
+
+class PromotionBloc {
+
+  //hashMaps,since only for these 2 classes do their id matter
+  var _companies = HashMap<String, Company>();
+  var _types = HashMap<String, Type>();
+
+  //promotions
+  var _promotions = <Promotion>[];
+
+  Stream<UnmodifiableListView<Promotion>> get promotions => _promotionsSubject.stream;
+
+  final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
+
+  PromotionBloc() {
+    _updatePromotions().then((_) {
+      _promotionsSubject.add(UnmodifiableListView(_promotions));
+    });
+  }
+
+  Future<Null> _updatePromotions() async {
+    final promotionQShot = await Firestore.instance.collection('all_promotions').getDocuments();
+    final companyQShot = await Firestore.instance.collection('all_companies').getDocuments();
+    final typeQShot = await Firestore.instance.collection('all_types').getDocuments();
+
+    companyQShot.documents.forEach((doc) {
+      _companies[doc.documentID] = Company(doc.data['name'], doc.data['locations'], doc.data['logoURL']);
+    });
+
+    typeQShot.documents.forEach((doc) {
+      _types[doc.documentID] = Type(doc.data['title'], doc.data['child_id']);
+    });
+
+    _promotions = promotionQShot.documents.map(
+            (doc) => Promotion(
+            doc.data['title'],
+            _companies[doc.data['company']],
+            doc.data['start_date'],
+            doc.data['end_date'],
+            doc.data['item_type'].map((type) => _types[type]).toList())
+    ).toList();
+
+  }
+
+
+}
+
+class Promotion {
   final String title;
   final Company company;
   final String start_date;
   final String end_date;
-  DocumentReference reference;
+  final List types;
 
-  Promotion(this.title, this.company, this.start_date, this.end_date);
-
-  Promotion.fromMap(Map<String, dynamic> map, {this.reference})
-      : assert(map['title'] != null),
-        assert(map['company'] != null),
-        assert(map['start_date'] != null),
-        assert(map['end_date'] != null),
-        title = map['title'],
-        company = new Company(map['company']),
-        start_date = map['start_date'],
-        end_date = map['end_date'];
-
-  Promotion.fromSnapshot(DocumentSnapshot snapshot)
-      : this.fromMap(snapshot.data, reference: snapshot.reference);
+  Promotion(this.title, this.company, this.start_date, this.end_date, this.types);
 
 }
 
 class Company {
-  final String companyID;
-  String name;
-  List locations;
-  String logoURL;
+  final String name;
+  final List locations;
+  final String logoURL;
 
-  Company(companyID) : this.companyID = companyID;
+  Company(this.name, this.locations, this.logoURL);
 
-  Future<String> getLogoUrl() async {
-    return await Firestore.instance.collection('all_companies').document(this.companyID).get().then((DocumentSnapshot ds) {
-      this.name = ds.data["name"];
-      this.locations = ds.data["locations"];
-      this.logoURL = ds.data["logoURL"];
-      return this.logoURL;});
-  }
+//  Future<String> getLogoUrl() async {
+//    return await Firestore.instance.collection('all_companies').document(this.companyID).get().then((DocumentSnapshot ds) {
+//      this.name = ds.data["name"];
+//      this.locations = ds.data["locations"];
+//      this.logoURL = ds.data["logoURL"];
+//      return this.logoURL;});
+//  }
 
+}
+
+class Type {
+  final String title;
+  final List child_id;
+
+  Type(this.title, this.child_id);
 }
 
 class ExtractPromoDetails extends StatelessWidget{
@@ -335,6 +452,7 @@ class ExtractPromoDetails extends StatelessWidget{
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     )
                   )
                 ),
@@ -383,12 +501,16 @@ class ExtractPromoDetails extends StatelessWidget{
                           children: <Widget>[
                             Text(
                               "• ",
-                              style: TextStyle(fontSize: 16.0)
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16.0)
                             ),
                             Expanded(
                               child: Text(
                                 location,
-                                style: TextStyle(fontSize: 16.0)
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16.0)
                               ),
                             )
                           ],
@@ -396,6 +518,9 @@ class ExtractPromoDetails extends StatelessWidget{
                     ],
                   ),
                 ),
+                Padding(
+                  padding: EdgeInsets.all(20.0),
+                )
               ],
             )
           )
