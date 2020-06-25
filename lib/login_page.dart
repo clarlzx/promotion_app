@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:promotionapp/searchbar.dart';
 import 'package:promotionapp/sign_in.dart';
 import 'main.dart';
 
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) {
-                return MyApp();
+                return MyApp(bloc: PromotionBloc());
               },
             ),
           );

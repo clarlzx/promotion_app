@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 
-void main() => runApp(SignIn());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(SignIn());
+}
 
 class SignIn extends StatelessWidget {
   @override

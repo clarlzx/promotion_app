@@ -166,8 +166,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         todayColor: Colors.deepOrange[200],
         markersColor: Colors.brown[700],
         outsideDaysVisible: false,
+        weekdayStyle: TextStyle().copyWith(color: Colors.black),
       ),
       headerStyle: HeaderStyle(
+        titleTextStyle: TextStyle().copyWith(color: Colors.black, fontSize: 17.0),
         formatButtonTextStyle: TextStyle().copyWith(
             color: Colors.white, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
@@ -316,7 +318,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             ),
             margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: ListTile(
-              title: Text(event.toString()),
+              title: Text(event.toString(),
+                style: TextStyle(color: Colors.black)
+              ),
               onTap: () => print('$event tapped!'),
             ),
           ))
