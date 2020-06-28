@@ -33,11 +33,11 @@ class _LoginPageState extends State<LoginPage> {
     return OutlineButton(
       splashColor: Colors.grey,
       onPressed: () {
-        signInWithGoogle().whenComplete(() {
+        signInWithGoogle().then((String userid) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) {
-                return MyApp(bloc: PromotionBloc());
+                return MyApp(bloc: PromotionBloc(), userid: userid);
               },
             ),
           );

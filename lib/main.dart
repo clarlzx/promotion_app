@@ -1,16 +1,21 @@
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:promotionapp/calendar.dart';
 import 'package:flutter/painting.dart';
 import 'package:rxdart/rxdart.dart';
 import 'searchbar.dart';
+import 'package:flutter_share/flutter_share.dart';
+
+final FirebaseAuth _auth = FirebaseAuth.instance;
 
 class MyApp extends StatelessWidget {
   final PromotionBloc bloc;
+  final String userid;
 
-  MyApp({Key key, this.bloc}) : super(key: key);
+  MyApp({Key key, this.bloc, this.userid}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,21 +33,19 @@ class MyApp extends StatelessWidget {
         // Define the default TextTheme. Use this to specify the default
         // text styling for headlines, titles, bodies of text, and more.
       ),
-      home: MyHomePage(
-        bloc: bloc
-      ),
+      home: MyHomePage(bloc: bloc, userid: userid),
       routes: {
-        ExtractPromoDetails.routeName: (context) => ExtractPromoDetails(),
+        ExtractPromoDetails.routeName: (context) => ExtractPromoDetails(userid),
       },
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-
   final PromotionBloc bloc;
+  final String userid;
 
-  MyHomePage({Key key, this.bloc}) : super(key: key);
+  MyHomePage({Key key, this.bloc, this.userid}) : super(key: key);
 
   @override
   _MyHomePageState createState() {
@@ -64,27 +67,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
     Widget mainWidget = AppBar(
       title: customWidget,
       leading: IconButton(
-        icon: Icon(
-            Icons.filter_list,
-            color: Colors.white
-        ),
-        onPressed: () {
-          _scaffoldKey.currentState.openDrawer();
-        }
-      ),
+          icon: Icon(Icons.filter_list, color: Colors.white),
+          onPressed: () {
+            _scaffoldKey.currentState.openDrawer();
+          }),
       actions: <Widget>[
         IconButton(
           onPressed: () {
             showSearch(
                 context: context,
-                delegate: PromotionSearch(widget.bloc.promotions)
-            );
+                delegate: PromotionSearch(widget.bloc.promotions));
 //FOR A SEARCH BAR THAT DOES NOT NAVIGATE TO A NEW PAGE
 //            setState(() {
 //              if (this.customIcon.icon == Icons.search) {
@@ -111,37 +108,40 @@ class _MyHomePageState extends State<MyHomePage> {
       ],
     );
 
-
-    List<Widget> titles = <Widget>[mainWidget , AppBar(title: Text('Promotion Calendar'))];
-    List<Widget> options = <Widget>[_buildBody(context), Calendar()];
+    List<Widget> titles = <Widget>[
+      mainWidget,
+      AppBar(title: Text('Promotion Calendar'))
+    ];
+    List<Widget> options = <Widget>[
+      _buildBody(context),
+      Calendar(widget.userid)
+    ];
 
     return Scaffold(
       key: _scaffoldKey,
       appBar: titles.elementAt(_selectedIndex),
       body: options.elementAt(_selectedIndex),
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              child: Text('Filter'),
-              decoration: BoxDecoration(
-                color: Colors.blueGrey,
-              ),
+          child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            child: Text('Filter'),
+            decoration: BoxDecoration(
+              color: Colors.blueGrey,
             ),
-            ListTile(
-              title: Text('Item 1'),
-            ),
-            ListTile(
-              title: Text('Item 2'),
-            )
-          ],
-        )
-      ),
+          ),
+          ListTile(
+            title: Text('Item 1'),
+          ),
+          ListTile(
+            title: Text('Item 2'),
+          )
+        ],
+      )),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
-        items: const <BottomNavigationBarItem>
-        [
+        items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             title: Text('Home'),
@@ -161,19 +161,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildBody(BuildContext context) {
     // TODO: get actual snapshot from Cloud Firestore
-    return ListView (
+    return ListView(
       padding: EdgeInsets.all(8.0),
       children: <Widget>[
-        Padding (
+        Padding(
           padding: EdgeInsets.all(3.0),
         ),
         Container(
-          alignment: Alignment(-0.89,0.0),
+          alignment: Alignment(-0.89, 0.0),
           child: Text(
             "Hot Deals",
-            style: TextStyle(
-                color: Colors.black,
-                fontSize: 20),
+            style: TextStyle(color: Colors.black, fontSize: 20),
           ),
         ),
         Container(
@@ -184,13 +182,10 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.all(10.0),
         ),
         Container(
-          alignment: Alignment(-0.89,0.0),
+          alignment: Alignment(-0.89, 0.0),
           child: Text(
             "New Deals",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20
-            ),
+            style: TextStyle(color: Colors.black, fontSize: 20),
           ),
         ),
         Container(
@@ -201,17 +196,14 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.all(10.0),
         ),
         Container(
-          alignment: Alignment(-0.89,0.0),
+          alignment: Alignment(-0.89, 0.0),
           child: Text(
             "All Deals",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20
-            ),
+            style: TextStyle(color: Colors.black, fontSize: 20),
           ),
         ),
         Container(
-          height: 300.0,
+          height: 200.0,
           child: _buildSection(context),
         )
       ],
@@ -220,13 +212,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildSection(BuildContext context) {
     return StreamBuilder<UnmodifiableListView<Promotion>>(
-      stream: widget.bloc.promotions,
-      initialData: UnmodifiableListView<Promotion>([]),
-      builder: (context, snapshot) => ListView(
-        scrollDirection: Axis.horizontal,
-        children: snapshot.data.map(_buildListItem).toList(),
-      )
-    );
+        stream: widget.bloc.promotions,
+        initialData: UnmodifiableListView<Promotion>([]),
+        builder: (context, snapshot) => ListView(
+              scrollDirection: Axis.horizontal,
+              children: snapshot.data.map(_buildListItem).toList(),
+            ));
   }
 
 //  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
@@ -237,7 +228,6 @@ class _MyHomePageState extends State<MyHomePage> {
 //  }
 
   Widget _buildListItem(Promotion promotion) {
-
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -259,18 +249,16 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Container(
               width: 140.0,
               height: 183.0,
-              child: Column(
-                  children: <Widget>[
-                    Container(
-                      height: 140.0,
-                      width: 140.0,
-                      decoration: new BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(promotion.company.logoURL),
-                          fit: BoxFit.fill,
-                        )
-                      ),
-                    ),
+              child: Column(children: <Widget>[
+                Container(
+                  height: 140.0,
+                  width: 140.0,
+                  decoration: new BoxDecoration(
+                      image: DecorationImage(
+                    image: NetworkImage(promotion.company.logoURL),
+                    fit: BoxFit.fill,
+                  )),
+                ),
 //                  FutureBuilder(
 //                    future: promotion.company.getLogoUrl(),
 //                    initialData: "",
@@ -287,21 +275,18 @@ class _MyHomePageState extends State<MyHomePage> {
 //                      );
 //                    }
 //                  ),
-                    Padding(
-                      padding: EdgeInsets.all(3.0),
-                    ),
-                    Container(
-                      width: 100.0,
-                      child: Text(
-                        promotion.title,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.black)
-                      ),
-                    ),
-                  ]
-              ),
+                Padding(
+                  padding: EdgeInsets.all(3.0),
+                ),
+                Container(
+                  width: 100.0,
+                  child: Text(promotion.title,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.black)),
+                ),
+              ]),
             ),
           ),
         ),
@@ -335,7 +320,6 @@ class _MyHomePageState extends State<MyHomePage> {
 //}
 
 class PromotionBloc {
-
   //hashMaps,since only for these 2 classes do their id matter
   var _companies = HashMap<String, Company>();
   var _types = HashMap<String, Type>();
@@ -343,7 +327,8 @@ class PromotionBloc {
   //promotions
   var _promotions = <Promotion>[];
 
-  Stream<UnmodifiableListView<Promotion>> get promotions => _promotionsSubject.stream;
+  Stream<UnmodifiableListView<Promotion>> get promotions =>
+      _promotionsSubject.stream;
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
 
@@ -354,30 +339,32 @@ class PromotionBloc {
   }
 
   Future<Null> _updatePromotions() async {
-    final promotionQShot = await Firestore.instance.collection('all_promotions').getDocuments();
-    final companyQShot = await Firestore.instance.collection('all_companies').getDocuments();
-    final typeQShot = await Firestore.instance.collection('all_types').getDocuments();
+    final promotionQShot =
+        await Firestore.instance.collection('all_promotions').getDocuments();
+    final companyQShot =
+        await Firestore.instance.collection('all_companies').getDocuments();
+    final typeQShot =
+        await Firestore.instance.collection('all_types').getDocuments();
 
     companyQShot.documents.forEach((doc) {
-      _companies[doc.documentID] = Company(doc.data['name'], doc.data['locations'], doc.data['logoURL']);
+      _companies[doc.documentID] =
+          Company(doc.data['name'], doc.data['locations'], doc.data['logoURL']);
     });
 
     typeQShot.documents.forEach((doc) {
       _types[doc.documentID] = Type(doc.data['title'], doc.data['child_id']);
     });
 
-    _promotions = promotionQShot.documents.map(
-            (doc) => Promotion(
+    _promotions = promotionQShot.documents
+        .map((doc) => Promotion(
             doc.data['title'],
             _companies[doc.data['company']],
             doc.data['start_date'],
             doc.data['end_date'],
-            doc.data['item_type'].map((type) => _types[type]).toList())
-    ).toList();
-
+            doc.data['item_type'].map((type) => _types[type]).toList(),
+            doc.documentID))
+        .toList();
   }
-
-
 }
 
 class Promotion {
@@ -386,9 +373,10 @@ class Promotion {
   final String start_date;
   final String end_date;
   final List types;
+  final String promoid;
 
-  Promotion(this.title, this.company, this.start_date, this.end_date, this.types);
-
+  Promotion(this.title, this.company, this.start_date, this.end_date,
+      this.types, this.promoid);
 }
 
 class Company {
@@ -415,118 +403,178 @@ class Type {
   Type(this.title, this.child_id);
 }
 
-class ExtractPromoDetails extends StatelessWidget{
+class ExtractPromoDetails extends StatelessWidget {
   static const routeName = '/extractArguments';
+  String userid;
+
+  ExtractPromoDetails(String userid) {
+    this.userid = userid;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final Promotion args = ModalRoute.of(context).settings.arguments;
+    final Promotion args = ModalRoute
+        .of(context)
+        .settings
+        .arguments;
+
+    Future<void> share() async {
+      String locations = '';
+      for (String location in args.company.locations) {
+        locations += location + '; ';
+      }
+      await FlutterShare.share(
+        title: args.title,
+        text: "Don't miss out on this promotion: " +
+            args.title +
+            ' from ' +
+            args.start_date +
+            ' to ' +
+            args.end_date +
+            ' at these locations: ' +
+            locations,
+//          linkUrl: 'https://flutter.dev/',
+//          chooserTitle: 'Example Chooser Title'
+      );
+    }
+
+    // Adding a promotion
+    // Check if userid is in database, if it is not, add userid
+    // Add promotion id
+    void addpromo() async {
+      final snapShot = await Firestore.instance
+          .collection('all_users')
+          .document(userid)
+          .get();
+      // If userid does not exist
+      if (snapShot == null || !snapShot.exists) {
+        Firestore.instance.collection("all_users").document(userid).setData({
+          'saved_promotion': [args.promoid]
+        });
+      } else {
+        // If userid exists
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'saved_promotion': FieldValue.arrayUnion([args.promoid])
+        });
+      }
+    }
+
+    // Deleting a promotion
+    void deletepromo() async {
+      Firestore.instance.collection("all_users").document(userid).updateData({
+        'saved_promotion': FieldValue.arrayRemove([args.promoid])
+      });
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        actions: <Widget>[
-          IconButton(
-            //EDIT HERE FOR ADD
-            icon: Icon(Icons.add,
-              color: Colors.white
-            )
-          ),
-          IconButton(
-            icon: Icon(Icons.share,
-            color: Colors.white
-            )
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Align(
-          alignment: Alignment.center,
-          child: Container(
-            width: 350,
-            child: Column(
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(10.0),
-                  child: Text(
-                    args.title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    )
-                  )
-                ),
-                Card(
-                  elevation: 10.0,
-                  child: Container(
+        appBar: AppBar(
+          actions: <Widget>[
+            IconButton(
+              //EDIT HERE FOR ADD
+              icon: Icon(Icons.add, color: Colors.white),
+              onPressed: () {
+                addpromo();
+              },
+            ),
+            IconButton(
+                icon: Icon(Icons.delete, color: Colors.white),
+                onPressed: () {
+                  deletepromo();
+                }),
+            IconButton(
+              icon: Icon(Icons.share, color: Colors.white),
+              onPressed: share,
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+            child: Align(
+                alignment: Alignment.center,
+                child: Container(
                     width: 350,
-                    child: Image(
-                      image: NetworkImage(args.company.logoURL),
-                      fit: BoxFit.fitWidth,
-                    )
-                  )
-                ),
-                Padding(
-                  padding: EdgeInsets.all(10.0),
-                ),
-                Align(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(fontSize: 19.0, color: Colors.black),
-                          children: <TextSpan>[
-                            TextSpan(text: 'Company: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(text: args.company.name),
-                          ],
-                        ),
-                      ),
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(fontSize: 19.0, color: Colors.black),
-                          children: <TextSpan>[
-                            TextSpan(text: 'Dates: ', style: TextStyle(fontWeight: FontWeight.bold)),
-                            TextSpan(text: args.start_date + ' - ' + args.end_date),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        'Locations:',
-                        style: TextStyle(fontSize: 19.0, color: Colors.black, fontWeight: FontWeight.bold)
-                      ),
-                      for (String location in args.company.locations)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              "• ",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16.0)
-                            ),
-                            Expanded(
-                              child: Text(
-                                location,
+                    child: Column(
+                      children: <Widget>[
+                        Container(
+                            padding: EdgeInsets.all(10.0),
+                            child: Text(args.title,
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
                                   color: Colors.black,
-                                  fontSize: 16.0)
+                                ))),
+                        Card(
+                            elevation: 10.0,
+                            child: Container(
+                                width: 350,
+                                child: Image(
+                                  image: NetworkImage(args.company.logoURL),
+                                  fit: BoxFit.fitWidth,
+                                ))),
+                        Padding(
+                          padding: EdgeInsets.all(10.0),
+                        ),
+                        Align(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                      fontSize: 19.0, color: Colors.black),
+                                  children: <TextSpan>[
+                                    TextSpan(
+                                        text: 'Company: ',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    TextSpan(text: args.company.name),
+                                  ],
+                                ),
                               ),
-                            )
-                          ],
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(20.0),
-                )
-              ],
-            )
-          )
-        )
-      )
-    );
+                              RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                      fontSize: 19.0, color: Colors.black),
+                                  children: <TextSpan>[
+                                    TextSpan(
+                                        text: 'Dates: ',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    TextSpan(
+                                        text: args.start_date +
+                                            ' - ' +
+                                            args.end_date),
+                                  ],
+                                ),
+                              ),
+                              Text('Locations:',
+                                  style: TextStyle(
+                                      fontSize: 19.0,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold)),
+                              for (String location in args.company.locations)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text("• ",
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 16.0)),
+                                    Expanded(
+                                      child: Text(location,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 16.0)),
+                                    )
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(20.0),
+                        )
+                      ],
+                    )))));
   }
 }
-
