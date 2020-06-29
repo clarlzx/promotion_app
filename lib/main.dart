@@ -42,6 +42,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/promoDetails': (context) => ExtractPromoDetails(userid),
         '/filterPage': (context) => ExtractFilterPromotion(),
+        MyHomePage.routeName: (BuildContext context) => new MyHomePage(bloc: bloc, userid: userid),
       },
     );
   }
@@ -52,6 +53,8 @@ class MyHomePage extends StatefulWidget {
   final String userid;
 
   MyHomePage({Key key, this.bloc, this.userid}) : super(key: key);
+
+  static String routeName = "/MyHomePage";
 
   @override
   _MyHomePageState createState() {
@@ -110,7 +113,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
     List<Widget> titles = <Widget>[
       mainWidget,
-      AppBar(title: Text('Promotion Calendar'))
+      AppBar(title: Text('Promotion Calendar'),
+        leading: IconButton(
+          icon: Icon(Icons.calendar_today),
+          color: Colors.white,)
+      )
     ];
     List<Widget> options = <Widget>[
       _buildBody(context),
@@ -190,7 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         Container(
           height: 200.0,
-          child: _buildSection(context),
+          child: _buildNewSection(context),
         ),
         Padding(
           padding: EdgeInsets.all(10.0),
@@ -367,7 +374,18 @@ class _MyHomePageState extends State<MyHomePage> {
           FilterDurationList(title: keys, checkedDurationMap: checkedDurationMap)).toList()
     );
   }
-        Widget _buildSection(BuildContext context) {
+
+  Widget _buildNewSection(BuildContext context) {
+    return StreamBuilder<UnmodifiableListView<Promotion>>(
+        stream: widget.bloc.Newpromotions,
+        initialData: UnmodifiableListView<Promotion>([]),
+        builder: (context, snapshot) => ListView(
+          scrollDirection: Axis.horizontal,
+          children: snapshot.data.map(_buildListItem).toList(),
+        ));
+  }
+
+  Widget _buildSection(BuildContext context) {
     return StreamBuilder<UnmodifiableListView<Promotion>>(
         stream: widget.bloc.promotions,
         initialData: UnmodifiableListView<Promotion>([]),
@@ -485,15 +503,21 @@ class PromotionBloc {
 
   //promotions
   var _promotions = <Promotion>[];
- 
+  var _Newpromotions = <Promotion>[];
+  var _Hotpromotions = <Promotion>[];
+
   var _typesStream = <Type>[];
   var _companyStream = <Company>[];
 
   Stream<UnmodifiableListView<Promotion>> get promotions => _promotionsSubject.stream;
+  Stream<UnmodifiableListView<Promotion>> get Newpromotions => _NewpromotionsSubject.stream;
+  Stream<UnmodifiableListView<Promotion>> get Hotpromotions => _HotpromotionsSubject.stream;
   Stream<UnmodifiableListView<Type>> get typesStream => _typesSubject.stream;
   Stream<UnmodifiableListView<Company>> get companyStream => _companySubject.stream;
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
+  final _NewpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
+  final _HotpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _typesSubject = BehaviorSubject<UnmodifiableListView<Type>>();
   final _companySubject = BehaviorSubject<UnmodifiableListView<Company>>();
 
@@ -501,6 +525,8 @@ class PromotionBloc {
   PromotionBloc() {
     _updatePromotions().then((_) {
       _promotionsSubject.add(UnmodifiableListView(_promotions));
+      _NewpromotionsSubject.add(UnmodifiableListView(_Newpromotions));
+      _HotpromotionsSubject.add(UnmodifiableListView(_Hotpromotions));
       _typesSubject.add(UnmodifiableListView(_typesStream));
       _companySubject.add(UnmodifiableListView(_companyStream));
     });
@@ -509,6 +535,8 @@ class PromotionBloc {
   Future<Null> _updatePromotions() async {
     final promotionQShot =
         await Firestore.instance.collection('all_promotions').getDocuments();
+    final NewpromotionQShot =
+      await Firestore.instance.collection('all_promotions').orderBy('start_date', descending: true).getDocuments();
     final companyQShot =
         await Firestore.instance.collection('all_companies').getDocuments();
     final typeQShot =
@@ -535,6 +563,17 @@ class PromotionBloc {
             doc.data['item_type'].map((type) => _types[type]).toList(),
             doc.documentID))
         .toList();
+
+    _Newpromotions = NewpromotionQShot.documents
+        .map((doc) => Promotion(
+        doc.data['title'],
+        _companies[doc.data['company']],
+        doc.data['start_date'],
+        doc.data['end_date'],
+        doc.data['item_type'].map((type) => _types[type]).toList(),
+        doc.documentID))
+        .toList();
+
   }
 }
 
@@ -653,6 +692,7 @@ class ExtractPromoDetails extends StatelessWidget {
                 icon: Icon(Icons.delete, color: Colors.white),
                 onPressed: () {
                   deletepromo();
+                  Navigator.pushNamed(context, MyHomePage.routeName);
                 }),
             IconButton(
               icon: Icon(Icons.share, color: Colors.white),

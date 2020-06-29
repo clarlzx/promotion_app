@@ -320,8 +320,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEventList() {
-    print(_selectedEvents);
-    print(anothereventlist);
 
     Future<DocumentSnapshot> mappingfunc(event) async {
       DocumentSnapshot promo = await Firestore.instance
@@ -354,10 +352,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               mappingfunc(event).then((DocumentSnapshot promotion) {
                 mappingfunc2(promotion.data['company'])
                     .then((DocumentSnapshot company) {
-                  Navigator.pushNamed(context, ExtractPromoDetails.routeName,
+                  Navigator.pushNamed(context, '/promoDetails',
                       arguments: new Promotion(
                           promotion.data['title'],
                           new Company(
+                              company.documentID,
                               company.data['name'],
                               company.data['locations'],
                               company.data['logoURL']),

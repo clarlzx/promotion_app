@@ -40,10 +40,9 @@ class ExtractFilterPromotion extends StatelessWidget {
             );
           }
 
-          List result = snapshot.data.toList();
-          if (args.checkedTypeMap.values.contains(true)){
-            //need to filter due to the presence of at least one true
-          }
+          final result = snapshot.data.where((promo) =>
+            typeFilter(promo,args.checkedTypeMap)
+          );
 
           return ListView(
             children: result.map<ListTile>((promotion) =>
@@ -64,4 +63,20 @@ class ExtractFilterPromotion extends StatelessWidget {
       )
     );
   }
+
+  bool typeFilter(Promotion promo, Map<String, bool> checkedTypeMap) {
+    bool add = true;
+    for (String key in checkedTypeMap.keys) {
+      if (checkedTypeMap[key] && promo.types.map((t) => t.id).contains(key)){
+        //do nothing
+      } else {
+        if (checkedTypeMap[key]) {
+          add = false;
+          break;
+        }
+      }
+    }
+    return add;
+  }
+
 }
