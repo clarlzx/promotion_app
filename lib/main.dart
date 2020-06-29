@@ -1,11 +1,16 @@
 import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:promotionapp/calendar.dart';
 import 'package:flutter/painting.dart';
 import 'package:rxdart/rxdart.dart';
 import 'searchbar.dart';
+import 'package:flutter/scheduler.dart';
+import 'filter.dart';
+import 'filterpage.dart';
 
 class MyApp extends StatelessWidget {
   final PromotionBloc bloc;
@@ -30,9 +35,10 @@ class MyApp extends StatelessWidget {
       ),
       home: MyHomePage(
         bloc: bloc
-      ),
+    ),
       routes: {
-        ExtractPromoDetails.routeName: (context) => ExtractPromoDetails(),
+        '/promoDetails': (context) => ExtractPromoDetails(),
+        '/filterPage': (context) => ExtractFilterPromotion(),
       },
     );
   }
@@ -65,19 +71,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
 
-    GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
     Widget mainWidget = AppBar(
       title: customWidget,
-      leading: IconButton(
-        icon: Icon(
-            Icons.filter_list,
-            color: Colors.white
-        ),
-        onPressed: () {
-          _scaffoldKey.currentState.openDrawer();
-        }
-      ),
       actions: <Widget>[
         IconButton(
           onPressed: () {
@@ -116,25 +111,24 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> options = <Widget>[_buildBody(context), Calendar()];
 
     return Scaffold(
-      key: _scaffoldKey,
       appBar: titles.elementAt(_selectedIndex),
       body: options.elementAt(_selectedIndex),
       drawer: Drawer(
         child: ListView(
-          padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
-              child: Text('Filter'),
-              decoration: BoxDecoration(
-                color: Colors.blueGrey,
-              ),
+            Container(
+              height: MediaQuery.of(context).size.height*0.14,
+              child: DrawerHeader(
+                child: Text(
+                  'Filter Promotions',
+                  style: TextStyle(fontSize: 20.0),
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                ),
+              )
             ),
-            ListTile(
-              title: Text('Item 1'),
-            ),
-            ListTile(
-              title: Text('Item 2'),
-            )
+            _buildFilter(context),
           ],
         )
       ),
@@ -218,7 +212,164 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildSection(BuildContext context) {
+  Widget _buildFilter(BuildContext context) {
+
+    final Map<String, bool> checkedTypeMap = Map<String,bool>();
+    final Map<String, bool> checkedCompanyMap = Map<String, bool>();
+    final Map<String, bool> checkedDurationMap = Map<String, bool>();
+
+    return Container(
+        height: MediaQuery.of(context).size.height*0.86,
+        child: ListView(
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.all(8.0),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[800],
+//                border: Border.all(color: Colors.grey),
+              ),
+              height: 50.0,
+              child: Align(
+                alignment: FractionalOffset(0.09,0.5),
+                child: Text(
+                  'BY CATEGORY',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ),
+            ),
+            _buildTypeFilter(context, checkedTypeMap),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+            ),
+            Container(
+              color: Colors.grey[800],
+              height: 50.0,
+              child: Align(
+                alignment: FractionalOffset(0.09,0.5),
+                child: Text(
+                  'BY COMPANY',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ),
+            ),
+            _buildCompanyFilter(context, checkedCompanyMap),
+            Padding(
+              padding: EdgeInsets.all(8.0),
+            ),
+            Container(
+              color: Colors.grey[800],
+              height: 50.0,
+              child: Align(
+                alignment: FractionalOffset(0.09,0.5),
+                child: Text(
+                  'BY DURATION',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ),
+            ),
+            _buildDurationFilter(context, checkedDurationMap),
+            RaisedButton(
+              color: Colors.teal[200],
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/filterPage',
+                  arguments: PromotionFilter(
+                    widget.bloc.promotions,
+                    checkedTypeMap,
+                    checkedCompanyMap,
+                    checkedDurationMap,
+                  ),
+                );
+              },
+              child: Text('Filter',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(12.0),
+            )
+          ],
+        )
+    );
+  }
+
+  Widget _buildTypeFilter(BuildContext context, Map<String,bool> checkedTypeMap) {
+    return StreamBuilder<UnmodifiableListView<Type>>(
+      stream: widget.bloc.typesStream,
+      initialData: UnmodifiableListView<Type>([]),
+      builder: (context,
+          AsyncSnapshot<UnmodifiableListView<Type>> snapshot) {
+        HashMap<Type, List<Type>> typeMap = HashMap<Type, List<Type>>();
+
+        //using child_id
+        //for now excluding category mains, hence no select all function
+
+        snapshot.data.toList().forEach((type) {
+          if (!type.child_id.isEmpty) {
+            typeMap[type] = type.child_id.map((child_id) =>
+                snapshot.data.toList().firstWhere((t) => t.id == child_id))
+                .toList();
+          } else {
+            checkedTypeMap[type.id] = false;
+          }
+        });
+        return Column(
+          children: snapshot.data.toList().map((x) =>
+              _buildFilterListItem(x, typeMap, checkedTypeMap)).toList()
+        );
+      }
+    );
+  }
+
+  //very inefficient for now, because the hashmap will be repeated across each hashmap item
+  Widget _buildFilterListItem(Type type, HashMap<Type, List<Type>> typeMap, Map<String, bool> checkedTypeMap) {
+    return FilterList(type: type, typeMap: typeMap, checkedTypeMap: checkedTypeMap);
+  }
+
+  Widget _buildCompanyFilter(BuildContext context, Map<String,bool> checkedCompanyMap) {
+    return ExpansionTile(
+      title: Text('Companies'),
+      children: <Widget>[
+        StreamBuilder<UnmodifiableListView<Company>>(
+            stream: widget.bloc.companyStream,
+            initialData: UnmodifiableListView<Company>([]),
+            builder: (context, AsyncSnapshot<UnmodifiableListView<Company>> snapshot) {
+
+              snapshot.data.forEach((company) {
+                checkedCompanyMap[company.id] = false;
+              });
+
+              return Column(
+                children: snapshot.data.toList().map((x) =>
+                    _buildCompanyFilterListItem(x, checkedCompanyMap)).toList(),
+              );
+            }
+        )
+      ],
+    );
+  }
+
+  Widget _buildCompanyFilterListItem(Company company, Map<String, bool> checkedCompanyMap) {
+    return FilterCompanyList(company: company, checkedCompanyMap: checkedCompanyMap);
+  }
+
+  Widget _buildDurationFilter(BuildContext context, Map<String, bool> checkedDurationMap) {
+
+    checkedDurationMap['Today'] = false;
+    checkedDurationMap['This Week'] = false;
+
+    return ExpansionTile(
+      title: Text('Duation'),
+      children: checkedDurationMap.keys.map((keys) =>
+          FilterDurationList(title: keys, checkedDurationMap: checkedDurationMap)).toList()
+    );
+  }
+        Widget _buildSection(BuildContext context) {
     return StreamBuilder<UnmodifiableListView<Promotion>>(
       stream: widget.bloc.promotions,
       initialData: UnmodifiableListView<Promotion>([]),
@@ -242,7 +393,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onTap: () {
         Navigator.pushNamed(
           context,
-          ExtractPromoDetails.routeName,
+          '/promoDetails',
           arguments: promotion,
         );
       },
@@ -340,16 +491,28 @@ class PromotionBloc {
   var _companies = HashMap<String, Company>();
   var _types = HashMap<String, Type>();
 
+  //sorted HashMap, where each type links to their child
+
   //promotions
   var _promotions = <Promotion>[];
 
+  var _typesStream = <Type>[];
+  var _companyStream = <Company>[];
+
   Stream<UnmodifiableListView<Promotion>> get promotions => _promotionsSubject.stream;
+  Stream<UnmodifiableListView<Type>> get typesStream => _typesSubject.stream;
+  Stream<UnmodifiableListView<Company>> get companyStream => _companySubject.stream;
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
+  final _typesSubject = BehaviorSubject<UnmodifiableListView<Type>>();
+  final _companySubject = BehaviorSubject<UnmodifiableListView<Company>>();
+
 
   PromotionBloc() {
     _updatePromotions().then((_) {
       _promotionsSubject.add(UnmodifiableListView(_promotions));
+      _typesSubject.add(UnmodifiableListView(_typesStream));
+      _companySubject.add(UnmodifiableListView(_companyStream));
     });
   }
 
@@ -359,11 +522,14 @@ class PromotionBloc {
     final typeQShot = await Firestore.instance.collection('all_types').getDocuments();
 
     companyQShot.documents.forEach((doc) {
-      _companies[doc.documentID] = Company(doc.data['name'], doc.data['locations'], doc.data['logoURL']);
+      _companies[doc.documentID] = Company(doc.documentID, doc.data['name'], doc.data['locations'], doc.data['logoURL']);
     });
 
+    _companyStream = _companies.values.toList();
+
     typeQShot.documents.forEach((doc) {
-      _types[doc.documentID] = Type(doc.data['title'], doc.data['child_id']);
+      _types[doc.documentID] = Type(doc.documentID, doc.data['title'], doc.data['child_id']);
+      _typesStream.add(Type(doc.documentID, doc.data['title'], doc.data['child_id']));
     });
 
     _promotions = promotionQShot.documents.map(
@@ -392,11 +558,12 @@ class Promotion {
 }
 
 class Company {
+  final String id;
   final String name;
   final List locations;
   final String logoURL;
 
-  Company(this.name, this.locations, this.logoURL);
+  Company(this.id, this.name, this.locations, this.logoURL);
 
 //  Future<String> getLogoUrl() async {
 //    return await Firestore.instance.collection('all_companies').document(this.companyID).get().then((DocumentSnapshot ds) {
@@ -409,10 +576,11 @@ class Company {
 }
 
 class Type {
+  final String id;
   final String title;
   final List child_id;
 
-  Type(this.title, this.child_id);
+  Type(this.id, this.title, this.child_id);
 }
 
 class ExtractPromoDetails extends StatelessWidget{

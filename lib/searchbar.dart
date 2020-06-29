@@ -98,7 +98,7 @@ class PromotionSearch extends SearchDelegate<Promotion> {
               close(context, x);
               Navigator.pushNamed(
                 context,
-                ExtractPromoDetails.routeName,
+                '/promoDetails',
                 arguments: x,
               );
             },
