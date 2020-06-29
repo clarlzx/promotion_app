@@ -1,12 +1,21 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:promotionapp/main.dart';
 
 class Calendar extends StatelessWidget {
+  String userid;
+
+  Calendar(String userid) {
+    this.userid = userid;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: MyHomePage(),
+      body: MyHomePage(userid),
     );
   }
 }
@@ -25,6 +34,12 @@ class Calendar extends StatelessWidget {
 //}
 
 class MyHomePage extends StatefulWidget {
+  MyHomePage(String userid) {
+    this.userid = userid;
+  }
+
+  String userid;
+
 //  MyHomePage({Key key, this.title}) : super(key: key);
 //
 //  final String title;
@@ -34,69 +49,65 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  Map<DateTime, List> _events;
+  Map<DateTime, List> _events = {};
   List _selectedEvents;
   AnimationController _animationController;
   CalendarController _calendarController;
+  Map<String, String> anothereventlist = {};
 
   @override
   void initState() {
     super.initState();
-    final _selectedDay = DateTime.now();
+    final _selectedDay = new DateTime.now();
 
-    _events = {
-      _selectedDay.subtract(Duration(days: 30)): [
-        'Event A0',
-        'Event B0',
-        'Event C0'
-      ],
-      _selectedDay.subtract(Duration(days: 27)): ['Event A1'],
-      _selectedDay.subtract(Duration(days: 20)): [
-        'Event A2',
-        'Event B2',
-        'Event C2',
-        'Event D2'
-      ],
-      _selectedDay.subtract(Duration(days: 16)): ['Event A3', 'Event B3'],
-      _selectedDay.subtract(Duration(days: 10)): [
-        'Event A4',
-        'Event B4',
-        'Event C4'
-      ],
-      _selectedDay.subtract(Duration(days: 4)): [
-        'Event A5',
-        'Event B5',
-        'Event C5'
-      ],
-      _selectedDay.subtract(Duration(days: 2)): ['Event A6', 'Event B6'],
-      _selectedDay: ["1 for 1 Ben and Jerry's", r"$2 off Starbucks Delivery"],
-      _selectedDay.add(Duration(days: 1)): [
-        'Event A8',
-        'Event B8',
-        'Event C8',
-        'Event D8'
-      ],
-      _selectedDay.add(Duration(days: 3)): Set.from(
-          ['Event A9', 'Event A9', 'Event B9']).toList(),
-      _selectedDay.add(Duration(days: 7)): [
-        'Event A10',
-        'Event B10',
-        'Event C10'
-      ],
-      _selectedDay.add(Duration(days: 11)): ['Event A11', 'Event B11'],
-      _selectedDay.add(Duration(days: 17)): [
-        'Event A12',
-        'Event B12',
-        'Event C12',
-        'Event D12'
-      ],
-      _selectedDay.add(Duration(days: 22)): ['Event A13', 'Event B13'],
-      _selectedDay.add(Duration(days: 26)): [
-        'Event A14',
-        'Event B14',
-        'Event C14'
-      ],
-    };
+    String userid = widget.userid;
+    List savedpromoids;
+    String promotitle;
+    String promostart;
+    String promoend;
+
+    // First search for all promotions saved by user
+    void search() async {
+      final DocumentSnapshot snapShot = await Firestore.instance
+          .collection('all_users')
+          .document(userid)
+          .get();
+      savedpromoids = snapShot.data['saved_promotion'];
+      // For every promo get the title, start and end dates and add into map
+      for (int i = 0; i < savedpromoids.length; i++) {
+        String promoid = savedpromoids[i];
+        final DocumentSnapshot ds = await Firestore.instance
+            .collection('all_promotions')
+            .document(promoid)
+            .get();
+        promotitle = ds.data['title'];
+        promostart = ds.data['start_date'];
+        promoend = ds.data['end_date'];
+        anothereventlist[savedpromoids[i]] = promotitle;
+
+        // If promotion within one month
+        if (promostart.substring(3, 5) == promoend.substring(3, 5)) {
+          // Check if there are existing promos on the day
+          DateTime date = new DateTime(
+              int.parse(promostart.substring(6)),
+              int.parse(promostart.substring(3, 5)),
+              int.parse(promostart.substring(0, 2)));
+          for (int i = 0;
+              i <=
+                  (int.parse(promoend.substring(0, 2)) -
+                      int.parse(promostart.substring(0, 2)));
+              i++) {
+            if (_events.containsKey(date.add(new Duration(days: i)))) {
+              _events[date.add(new Duration(days: i))].add(promoid);
+            } else {
+              _events[date.add(new Duration(days: i))] = [promoid];
+            }
+          }
+        } else {}
+      }
+    }
+
+    search();
 
     _selectedEvents = _events[_selectedDay] ?? [];
     _calendarController = CalendarController();
@@ -105,7 +116,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
     _animationController.forward();
   }
 
@@ -123,13 +133,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _onVisibleDaysChanged(DateTime first, DateTime last,
-      CalendarFormat format) {
+  void _onVisibleDaysChanged(
+      DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onVisibleDaysChanged');
   }
 
-  void _onCalendarCreated(DateTime first, DateTime last,
-      CalendarFormat format) {
+  void _onCalendarCreated(
+      DateTime first, DateTime last, CalendarFormat format) {
     print('CALLBACK: _onCalendarCreated');
   }
 
@@ -169,9 +179,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         weekdayStyle: TextStyle().copyWith(color: Colors.black),
       ),
       headerStyle: HeaderStyle(
-        titleTextStyle: TextStyle().copyWith(color: Colors.black, fontSize: 17.0),
-        formatButtonTextStyle: TextStyle().copyWith(
-            color: Colors.white, fontSize: 15.0),
+        titleTextStyle:
+            TextStyle().copyWith(color: Colors.black, fontSize: 17.0),
+        formatButtonTextStyle:
+            TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
           color: Colors.deepOrange[400],
           borderRadius: BorderRadius.circular(16.0),
@@ -282,8 +293,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         shape: BoxShape.rectangle,
         color: _calendarController.isSelected(date)
             ? Colors.brown[500]
-            : _calendarController.isToday(date) ? Colors.brown[300] : Colors
-            .blue[400],
+            : _calendarController.isToday(date)
+                ? Colors.brown[300]
+                : Colors.blue[400],
       ),
       width: 16.0,
       height: 16.0,
@@ -308,24 +320,58 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildEventList() {
+    print(_selectedEvents);
+    print(anothereventlist);
+
+    Future<DocumentSnapshot> mappingfunc(event) async {
+      DocumentSnapshot promo = await Firestore.instance
+          .collection('all_promotions')
+          .document(event)
+          .get();
+      return promo;
+    }
+
+    Future<DocumentSnapshot> mappingfunc2(company) async {
+      DocumentSnapshot comp = await Firestore.instance
+          .collection('all_companies')
+          .document(company)
+          .get();
+      return comp;
+    }
+
     return ListView(
-      children: _selectedEvents
-          .map((event) =>
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(width: 0.8),
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: ListTile(
-              title: Text(event.toString(),
-                style: TextStyle(color: Colors.black)
-              ),
-              onTap: () => print('$event tapped!'),
-            ),
-          ))
-          .toList(),
+      children: _selectedEvents.map((event) {
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(width: 0.8),
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: ListTile(
+            title: Text(anothereventlist[event],
+                style: TextStyle(color: Colors.black)),
+            onTap: () {
+              mappingfunc(event).then((DocumentSnapshot promotion) {
+                mappingfunc2(promotion.data['company'])
+                    .then((DocumentSnapshot company) {
+                  Navigator.pushNamed(context, ExtractPromoDetails.routeName,
+                      arguments: new Promotion(
+                          promotion.data['title'],
+                          new Company(
+                              company.data['name'],
+                              company.data['locations'],
+                              company.data['logoURL']),
+                          promotion.data['start_date'],
+                          promotion.data['end_date'],
+                          promotion.data['item_type'],
+                          event));
+                });
+              });
+              print('$event tapped!');
+            },
+          ),
+        );
+      }).toList(),
     );
   }
 }
-
