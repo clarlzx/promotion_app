@@ -103,3 +103,30 @@ class _FilterDurationState extends State<FilterDurationList> {
     );
   }
 }
+
+class FilterLocation extends StatefulWidget {
+
+  FilterLocation({Key key, @required this.checkedLocationMap}): super(key: key);
+
+  final Map<String, bool> checkedLocationMap;
+
+  @override
+  State createState() => _FilterLocationState();
+}
+
+class _FilterLocationState extends State<FilterLocation> {
+
+  @override
+  Widget build(BuildContext context) {
+
+    return CheckboxListTile(
+      title: Text('Near Me'),
+      value: widget.checkedLocationMap.values.first,
+      onChanged: (newValue) {
+        setState(() {
+          widget.checkedLocationMap['Near Me'] = newValue;
+        });
+      },
+    );
+  }
+}
