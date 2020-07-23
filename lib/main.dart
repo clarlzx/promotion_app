@@ -13,6 +13,9 @@ import 'package:flutter/scheduler.dart';
 import 'filter.dart';
 import 'filterpage.dart';
 import 'package:flutter_share/flutter_share.dart';
+import 'package:web_scraper/web_scraper.dart';
+import 'dart:io';
+import 'convertString.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -63,6 +66,285 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  WebScraper webScraper;
+  bool loaded = true; //change to false
+  String popNum;
+
+//
+//  @override
+//  void initState() {
+//    super.initState();
+//    _getData();
+//  }
+
+//  _getData() async {
+//    List<String> all_href = []; //probably need to set as a global variable later
+//    //with widget.bloc = promotionBloc
+//
+//    webScraper = WebScraper('https://singpromos.com');
+//
+//    Future<bool> get_href(String path) async{
+//      int page_num = 1;
+//      while (await webScraper.loadWebPage (path + '$page_num')) {
+//        List<Map<String, dynamic>> results = webScraper.getElement('div.tabs1Content > '
+//        'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ', ['href']);
+//        List<Map<String, dynamic>> next_page = webScraper.getElement('div.tabs1Content > '
+//        'div.mh-loop-pagination.clearfix > a.next.page-numbers', ['title']);
+//
+//        for (Map<String, dynamic> map in results) {
+//          String str = map['attributes']['href'].split('https://singpromos.com')[1];
+//          //filter out news
+//          if (!str.startsWith('/news')) {
+//          all_href.add(str);
+//          }
+//        }
+//
+//        if (next_page.isNotEmpty) {
+//          page_num++;
+//        } else {
+//          break;
+//        }
+//      }
+//      return true; //to show that it is done
+//    }
+//
+//    await get_href("/bydate/ontoday/page/");
+//    if (await get_href("/bydate/comingsoon/page/")) {
+////      setState(() {
+////        loaded = true;
+////      });
+//    }
+//
+//    for (String href in all_href) {
+//      await webScraper.loadWebPage(href);
+//
+//      String title = webScraper.getElement('h1.entry-title', ['title'])[0]['title'].toString().trim();
+//      if (title.contains('/')) {
+//        String temp = title.split('/')[0];
+//        for (String str in title.split('/').sublist(1)) {
+//          temp += " or " + str;
+//        }
+//        title = temp;
+//      }
+//
+//
+//      //list that contains start date, end date and company, note that some SGPROMO articles do not have this
+//      List<Map<String, dynamic>> duration_company = webScraper.getElement('table.eventDetailsTable < tbody < tr < td', ['title']);
+//
+//      String start_date = '';
+//      String end_date = '';
+//      String company = '';
+//
+//      if (duration_company.isNotEmpty) {
+//        List<String> duration_company_str_lst = duration_company[0]['title'].split('Location');
+//        company = duration_company_str_lst[1].trim();
+//        start_date = convert_date(duration_company_str_lst[0].split('(')[0].split('Starts')[1].trim());
+//        if (duration_company_str_lst[0].contains('ONE day only')) {
+//          end_date = start_date;
+//        } else {
+//          end_date = convert_date(duration_company_str_lst[0].split('Ends')[1].split('(')[0].trim());
+//        }
+//      } else {
+//        //some SGPROMO articles do not date and location stated
+//        //those that are empty are assumed to have a from date in the title (else just remove)
+//        //following code removes things like foodpanda promocodes for the whole month though
+//        //for now ignoring those with end_dates that are unknown
+////        if (title.contains('from')) {
+////          start_date = convert_date(title.split('from')[1].trim());
+////          end_date = 'UNKNOWN';
+////        } else if (title.contains('From')) {
+////          start_date = convert_date(title.split('From')[1].trim());
+////          if (start_date.contains(')')) {
+////            start_date = start_date.split(')')[0].trim();
+////          }
+////          end_date = 'UNKNOWN';
+////        }
+//      }
+//
+//      Map<String, List> typeMap = await getTypeMap();
+//      Map<String, List<String>> relatedWordsMap = await getRelatedWordsMap();
+//
+//      //all promotions are from ongoing n upcoming session, hence no need to
+//      //remove expired ones, just remove the ones that have unknown end_date
+//      //exists some promotions with empty company field, will ignore all of this first
+//      if (start_date != '' && !end_date.contains('UNKNOWN') && company != '') {
+//        //start adding into database to try first
+//
+//        //creating Company objects in collection
+//        await Firestore.instance.collection('web_companies')
+//            .document(company)
+//            .get()
+//            .then(
+//                (docSnapshot) {
+//              if (docSnapshot.exists) {
+//                //do nothing
+//              } else {
+//                Firestore.instance.collection("web_companies").document(
+//                  company).setData({
+//                  'title': company,
+//                  'logoURL': "https://firebasestorage.googleapis.com/v0/b/"
+//                      "promotion-918b7.appspot.com/o/defaultImg.png?alt=media"
+//                      "&token=4e673d46-7b92-4518-ad11-a532fcdfc491"
+//                });
+//              }
+//            }
+//        ).catchError((error) => print("Got error: $error"));
+//
+//
+//        //creating Promotion object in collection
+//        await Firestore.instance.collection('web_promotion')
+//            .document(title)
+//            .get()
+//            .then(
+//                (docSnapshot) {
+//              if (docSnapshot.exists) {
+//                //update happens here
+//                //happens when new tags are added
+//                List<String> types = List<String>.from(docSnapshot.data['types']);
+//                for (String key in relatedWordsMap.keys) {
+//                  for (String relatedWord in relatedWordsMap[key]) {
+//                    if (!(types.contains(relatedWord) && title.contains(relatedWord))) {
+//                      types.add(key);
+//                      for (String parentType in typeMap.keys) {
+//                        if (!(types.contains(parentType)) &&
+//                            typeMap[parentType].contains(key)) {
+//                          types.add(parentType);
+//                          break;
+//                        }
+//                      }
+//                      break;
+//                    }
+//                  }
+//                }
+//                Firestore.instance.collection("web_promotion").document(
+//                  title
+//                ).updateData({'types': types});
+//              } else {
+//                List<String> types = [];
+//                for (String key in relatedWordsMap.keys) {
+//                  for (String relatedWord in relatedWordsMap[key]) {
+//                    if (title.contains(relatedWord)) {
+//                      types.add(key);
+//                      for (String parentType in typeMap.keys) {
+//                        if (!(types.contains(parentType)) &&
+//                            typeMap[parentType].contains(key)) {
+//                          types.add(parentType);
+//                          break;
+//                        }
+//                      }
+//                      break;
+//                    }
+//                  }
+//                }
+//
+//                Firestore.instance.collection("web_promotion").document(
+//                  title
+//                ).setData({'title': title, 'company': company, 'types': types,
+//                  'clicks': 0, 'start_date': start_date, 'end_date': end_date});
+//              }
+//            }
+//        ).catchError((error) => print(" Got error: $error"));
+//
+//      }
+//    }
+//
+//    setState(() {
+//      loaded = true;
+//    });
+//
+//  }
+//
+//  Future<Map<String, List<String>>> getTypeMap() async {
+//    Map<String, List<String>> map = new Map<String, List<String>>();
+//    await Firestore.instance.collection('web_type')
+//      .getDocuments()
+//      .then(
+//        (collection) {
+//          collection.documents.forEach(
+//            (docSnapshot) {
+//              if (docSnapshot.data['child_id'] != null) {
+//                map[docSnapshot.data['title']] = List<String>.from(docSnapshot.data['child_id']);
+//              }
+//            }
+//          );
+//        }
+//    );
+//    return map;
+//  }
+//
+//  Future<Map<String, List<String>>> getRelatedWordsMap() async{
+//    Map<String, List<String>> map = new Map<String, List<String>>();
+//    await Firestore.instance.collection('web_type')
+//        .getDocuments()
+//        .then(
+//          (collection) {
+//            collection.documents.forEach(
+//              (docSnapshot) {
+//                if (docSnapshot.data['related_words'] != null) {
+//                  List<String> temp = [];
+//                  for (String str in docSnapshot.data['related_words']) {
+//                    temp.add(convertString.convertUpperCase(str));
+//                    temp.add(convertString.convertLowerCase(str));
+//                    temp.add(convertString.convertCapitalizeFirstWord(str));
+//                    if (str.split(" ").length > 1) {
+//                      temp.add(convertString.convertCapitalizeEachWord(str));
+//                    }
+//                    if (!(temp.contains(str))) {
+//                      temp.add(str);
+//                    }
+//                  }
+//                  map[docSnapshot.data['title']] = temp;
+//                }
+//              }
+//            );
+//          }
+//        ).catchError((error) => print("Got error: $error"));
+//    return map;
+//  }
+//
+//  String convert_date(String str) {
+//    //converting date_str : 11 July 2020 to 11/07/2020
+//    if (!str.contains("UNKNOWN")) {
+//      List<String> str_lst = str.split(' ');
+//      String result = str_lst[0] + "/" + convert_month(str_lst[1]) + "/" +
+//          str_lst[2];
+//      return result;
+//    }
+//    return str;
+//  }
+//
+//  String convert_month(String month_str) {
+//    //convert from July to 07
+//    if (month_str == "January" || month_str == "Jan") {
+//      return "01";
+//    } else if (month_str == "February" || month_str == "Feb") {
+//      return "02";
+//    } else if (month_str == "March" || month_str == "Mar") {
+//      return "03";
+//    } else if (month_str == "April" || month_str == "Apr") {
+//      return "04";
+//    } else if (month_str == "May") {
+//      return "05";
+//    } else if (month_str == "June" || month_str == "Jun") {
+//      return "06";
+//    } else if (month_str == "July" || month_str == "Jul") {
+//      return "07";
+//    } else if (month_str == "August" || month_str == "Aug") {
+//      return "08";
+//    } else if (month_str == "September" || month_str == "Sept" || month_str == "Sep") {
+//      return "09";
+//    } else if (month_str == "October" || month_str == "Oct") {
+//      return "10";
+//    } else if (month_str == "November" || month_str == "Nov") {
+//      return "11";
+//    } else if (month_str == "December" || month_str == "Dec") {
+//      return "12";
+//    } else {
+//      return ("Another kind of string was inputted");
+//    }
+//  }
+
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
@@ -85,26 +367,6 @@ class _MyHomePageState extends State<MyHomePage> {
             showSearch(
                 context: context,
                 delegate: PromotionSearch(widget.bloc.promotions));
-//FOR A SEARCH BAR THAT DOES NOT NAVIGATE TO A NEW PAGE
-//            setState(() {
-//              if (this.customIcon.icon == Icons.search) {
-//                this.customIcon = Icon(Icons.cancel, color: Colors.white);
-//                this.customWidget = TextField(
-//                  style: TextStyle(color: Colors.white),
-//                  decoration: new InputDecoration(
-//                    border: InputBorder.none,
-//                    hintText: 'Search...',
-//                    hintStyle: TextStyle(
-//                        fontSize: 18.0,
-//                        color: Colors.white60
-//                    ),
-//                  ),
-//                );
-//              } else {
-//                this.customIcon = Icon(Icons.search, color: Colors.white);
-//                this.customWidget = Text('View Promotions');
-//              }
-//            });
           },
           icon: customIcon,
         )
@@ -126,7 +388,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: titles.elementAt(_selectedIndex),
-      body: options.elementAt(_selectedIndex),
+      body: Center(
+        child: (loaded) ? options.elementAt(_selectedIndex)
+            : CircularProgressIndicator(),
+      ),
       drawer: Drawer(
         child: ListView(
           children: <Widget>[
@@ -222,6 +487,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final Map<String, bool> checkedTypeMap = Map<String,bool>();
     final Map<String, bool> checkedCompanyMap = Map<String, bool>();
     final Map<String, bool> checkedDurationMap = Map<String, bool>();
+    final Map<String, bool> checkedLocationMap = Map<String, bool>();
 
     return Container(
         height: MediaQuery.of(context).size.height*0.86,
@@ -277,9 +543,24 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             _buildDurationFilter(context, checkedDurationMap),
+            Container(
+              color: Colors.grey[800],
+              height: 50.0,
+              child: Align(
+                alignment: FractionalOffset(0.09,0.5),
+                child: Text(
+                  'BY LOCATION',
+                  style: TextStyle(fontSize: 16.0),
+                ),
+              ),
+            ),
+            _buildLocationFilter(context, checkedLocationMap),
+//            Text(_locationMessage),
             RaisedButton(
               color: Colors.teal[200],
               onPressed: () {
+//                _getCurrentLocation(widget.bloc.promotions);
+
                 Navigator.pushNamed(
                   context,
                   '/filterPage',
@@ -288,6 +569,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     checkedTypeMap,
                     checkedCompanyMap,
                     checkedDurationMap,
+                    checkedLocationMap,
                   ),
                 );
               },
@@ -369,9 +651,30 @@ class _MyHomePageState extends State<MyHomePage> {
     checkedDurationMap['This Week'] = false;
 
     return ExpansionTile(
-      title: Text('Duation'),
+      title: Text('Duration'),
       children: checkedDurationMap.keys.map((keys) =>
           FilterDurationList(title: keys, checkedDurationMap: checkedDurationMap)).toList()
+    );
+  }
+
+//  String _locationMessage =  "";
+//  void _getCurrentLocation(Stream<UnmodifiableListView<Promotion>> promoStream) async{
+////    final position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+//    List<Placemark> placemark = await Geolocator().placemarkFromAddress('313 Orchard Rd, #01-25 25A, Singapore 238895');
+//    setState(() {
+//      _locationMessage = "${placemark[0].position.latitude}, ${placemark[0].position.longitude}";
+//    });
+//  }
+
+  Widget _buildLocationFilter (BuildContext context, Map<String, bool> checkedLocationMap) {
+
+    checkedLocationMap['Near Me'] = false;
+
+    return ExpansionTile(
+      title: Text('Location'),
+      children: <Widget>[
+        FilterLocation(checkedLocationMap: checkedLocationMap),
+      ],
     );
   }
 
@@ -470,30 +773,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-//class Promotion{
-//  final String title;
-//  final Company company;
-//  final String start_date;
-//  final String end_date;
-//  DocumentReference reference;
-//
-//  Promotion(this.title, this.company, this.start_date, this.end_date);
-//
-//  Promotion.fromMap(Map<String, dynamic> map, {this.reference})
-//      : assert(map['title'] != null),
-//        assert(map['company'] != null),
-//        assert(map['start_date'] != null),
-//        assert(map['end_date'] != null),
-//        title = map['title'],
-//        company = new Company(map['company']),
-//        start_date = map['start_date'],
-//        end_date = map['end_date'];
-//
-//  Promotion.fromSnapshot(DocumentSnapshot snapshot)
-//      : this.fromMap(snapshot.data, reference: snapshot.reference);
-//
-//}
-
 class PromotionBloc {
   //hashMaps,since only for these 2 classes do their id matter
   var _companies = HashMap<String, Company>();
@@ -575,6 +854,7 @@ class PromotionBloc {
         .toList();
 
   }
+
 }
 
 class Promotion {
