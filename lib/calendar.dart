@@ -68,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     // First search for all promotions saved by user
     void search() async {
+      Map<String, String> eventlist = {};
       final DocumentSnapshot snapShot = await Firestore.instance
           .collection('all_users')
           .document(userid)
@@ -83,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         promotitle = ds.data['title'];
         promostart = ds.data['start_date'];
         promoend = ds.data['end_date'];
-        anothereventlist[savedpromoids[i]] = promotitle;
+        eventlist[savedpromoids[i]] = promotitle;
 
         // If promotion within one month
         if (promostart.substring(3, 5) == promoend.substring(3, 5)) {
@@ -103,8 +104,28 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               _events[date.add(new Duration(days: i))] = [promoid];
             }
           }
-        } else {}
+        } else {
+          DateTime startdate = new DateTime(
+              int.parse(promostart.substring(6)),
+              int.parse(promostart.substring(3, 5)),
+              int.parse(promostart.substring(0, 2)));
+          DateTime enddate = new DateTime(
+              int.parse(promoend.substring(6)),
+              int.parse(promoend.substring(3, 5)),
+              int.parse(promoend.substring(0, 2)));
+          while (!startdate.isAfter(enddate)) {
+            if (_events.containsKey(startdate)) {
+              _events[startdate].add(promoid);
+            } else {
+              _events[startdate] = [promoid];
+            }
+            startdate = startdate.add(new Duration(days: 1));
+          }
+        }
       }
+      setState(() {
+        anothereventlist = eventlist;
+      });
     }
 
     search();
@@ -352,10 +373,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               mappingfunc(event).then((DocumentSnapshot promotion) {
                 mappingfunc2(promotion.data['company'])
                     .then((DocumentSnapshot company) {
+
+                      // ExtractPromoDetails.routeName
                   Navigator.pushNamed(context, '/promoDetails',
                       arguments: new Promotion(
                           promotion.data['title'],
                           new Company(
+                              promotion.data['company'],
                               company.documentID,
                               company.data['name'],
                               company.data['locations'],

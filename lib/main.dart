@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -9,10 +10,13 @@ import 'package:promotionapp/calendar.dart';
 import 'package:flutter/painting.dart';
 import 'package:rxdart/rxdart.dart';
 import 'searchbar.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:flutter/scheduler.dart' hide Priority;
 import 'filter.dart';
 import 'filterpage.dart';
 import 'package:flutter_share/flutter_share.dart';
+import 'package:promotionapp/comment_page.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:toast/toast.dart';
 import 'package:web_scraper/web_scraper.dart';
 import 'dart:io';
 import 'convertString.dart';
@@ -66,6 +70,131 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  AndroidInitializationSettings androidInitializationSettings;
+  IOSInitializationSettings iosInitializationSettings;
+  InitializationSettings initializationSettings;
+
+  void _showstartNotification(
+      String promoid, String title, DateTime date) async {
+    await startnotification(promoid, title, date);
+  }
+
+  void _showendNotification(
+      String promoid, String title, DateTime date) async {
+    await endnotification(promoid, title, date);
+  }
+
+  Future<void> endnotification(
+      String promoid, String title, DateTime date) async {
+    DateTime datetime = date.add(new Duration(hours: 22, minutes: 10));
+    print(datetime.toString());
+    AndroidNotificationDetails androidNotificationDetails =
+    AndroidNotificationDetails(
+        'Channel_ID', 'Channel_title', 'Channel_body',
+        priority: Priority.High,
+        importance: Importance.Max,
+        ticker: 'ticker');
+    IOSNotificationDetails iosNotificationDetails = IOSNotificationDetails();
+    NotificationDetails notificationDetails =
+    NotificationDetails(androidNotificationDetails, iosNotificationDetails);
+    await flutterLocalNotificationsPlugin.schedule(
+        promoid.hashCode,
+        "Last day for this awesome promotion!",
+        title,
+        datetime,
+        notificationDetails,
+        payload: promoid);
+  }
+
+  Future<void> startnotification(
+      String promoid, String title, DateTime date) async {
+    DateTime datetime = date.add(new Duration(hours: 22, minutes: 10));
+    print(datetime.toString());
+    AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+            'Channel_ID', 'Channel_title', 'Channel_body',
+            priority: Priority.High,
+            importance: Importance.Max,
+            ticker: 'ticker');
+    IOSNotificationDetails iosNotificationDetails = IOSNotificationDetails();
+    NotificationDetails notificationDetails =
+        NotificationDetails(androidNotificationDetails, iosNotificationDetails);
+    await flutterLocalNotificationsPlugin.schedule(
+        promoid.hashCode,
+        "Don't miss this awesome promotion!",
+        title,
+        datetime,
+        notificationDetails,
+        payload: promoid);
+  }
+
+  void _deleteNotification(String promoid) async {
+    await deletenotification(promoid);
+  }
+
+  Future<void> deletenotification(String promoid) async {
+    await flutterLocalNotificationsPlugin.cancel(promoid.hashCode);
+  }
+
+  Future onSelectNotification(String payLoad) async {
+    final DocumentSnapshot ds = await Firestore.instance
+        .collection('all_promotions')
+        .document(payLoad)
+        .get();
+    final DocumentSnapshot ds1 = await Firestore.instance
+        .collection('all_companies')
+        .document(ds.data['company'])
+        .get();
+    if (payLoad != null) {
+      print(payLoad);
+    }
+    await Navigator.pushNamed(context, '/promoDetails',
+        arguments: new Promotion(
+            ds.data['title'],
+            new Company(ds1.data['company'], ds1.data['name'],
+                ds1.data['locations'], ds1.data['logoURL']),
+            ds.data['start_date'],
+            ds.data['end_date'],
+            ds.data['item_type'],
+            payLoad));
+  }
+
+  Future onDidReceiveLocalNotification(
+      int id, String title, String body, String payLoad) async {
+    final DocumentSnapshot ds = await Firestore.instance
+        .collection('all_promotions')
+        .document(payLoad)
+        .get();
+    final DocumentSnapshot ds1 = await Firestore.instance
+        .collection('all_companies')
+        .document(ds.data['company'])
+        .get();
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) => CupertinoAlertDialog(
+              title: Text(title),
+              content: Text(body),
+              actions: [
+                CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/promoDetails',
+                          arguments: new Promotion(
+                              ds.data['title'],
+                              new Company(ds1.data['company'], ds1.data['name'],
+                                  ds1.data['locations'], ds1.data['logoURL']),
+                              ds.data['start_date'],
+                              ds.data['end_date'],
+                              ds.data['item_type'],
+                              payLoad));
+                    },
+                    child: Text("okay"))
+              ],
+            ));
+  }
 
   WebScraper webScraper;
   bool loaded = true; //change to false
@@ -357,8 +486,23 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget customWidget = Text('View Promotions');
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    initializing();
+  }
 
+  void initializing() async {
+    androidInitializationSettings = AndroidInitializationSettings('app_icon');
+    iosInitializationSettings = IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    initializationSettings = InitializationSettings(
+        androidInitializationSettings, iosInitializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     Widget mainWidget = AppBar(
       title: customWidget,
       actions: <Widget>[
@@ -393,10 +537,10 @@ class _MyHomePageState extends State<MyHomePage> {
             : CircularProgressIndicator(),
       ),
       drawer: Drawer(
-        child: ListView(
-          children: <Widget>[
-            Container(
-              height: MediaQuery.of(context).size.height*0.14,
+          child: ListView(
+        children: <Widget>[
+          Container(
+              height: MediaQuery.of(context).size.height * 0.14,
               child: DrawerHeader(
                 child: Text(
                   'Filter Promotions',
@@ -405,12 +549,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 decoration: BoxDecoration(
                   color: Colors.grey[900],
                 ),
-              )
-            ),
-            _buildFilter(context),
-          ],
-        )
-      ),
+              )),
+          _buildFilter(context),
+        ],
+      )),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
@@ -483,14 +625,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildFilter(BuildContext context) {
-
-    final Map<String, bool> checkedTypeMap = Map<String,bool>();
+    final Map<String, bool> checkedTypeMap = Map<String, bool>();
     final Map<String, bool> checkedCompanyMap = Map<String, bool>();
     final Map<String, bool> checkedDurationMap = Map<String, bool>();
     final Map<String, bool> checkedLocationMap = Map<String, bool>();
 
     return Container(
-        height: MediaQuery.of(context).size.height*0.86,
+        height: MediaQuery.of(context).size.height * 0.86,
         child: ListView(
           scrollDirection: Axis.vertical,
           shrinkWrap: true,
@@ -505,7 +646,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               height: 50.0,
               child: Align(
-                alignment: FractionalOffset(0.09,0.5),
+                alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
                   'BY CATEGORY',
                   style: TextStyle(fontSize: 16.0),
@@ -520,7 +661,7 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Colors.grey[800],
               height: 50.0,
               child: Align(
-                alignment: FractionalOffset(0.09,0.5),
+                alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
                   'BY COMPANY',
                   style: TextStyle(fontSize: 16.0),
@@ -535,7 +676,7 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Colors.grey[800],
               height: 50.0,
               child: Align(
-                alignment: FractionalOffset(0.09,0.5),
+                alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
                   'BY DURATION',
                   style: TextStyle(fontSize: 16.0),
@@ -573,7 +714,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 );
               },
-              child: Text('Filter',
+              child: Text(
+                'Filter',
                 style: TextStyle(color: Colors.black),
               ),
             ),
@@ -581,72 +723,80 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: EdgeInsets.all(12.0),
             )
           ],
-        )
-    );
+        ));
   }
 
-  Widget _buildTypeFilter(BuildContext context, Map<String,bool> checkedTypeMap) {
+  Widget _buildTypeFilter(
+      BuildContext context, Map<String, bool> checkedTypeMap) {
     return StreamBuilder<UnmodifiableListView<Type>>(
-      stream: widget.bloc.typesStream,
-      initialData: UnmodifiableListView<Type>([]),
-      builder: (context,
-          AsyncSnapshot<UnmodifiableListView<Type>> snapshot) {
-        HashMap<Type, List<Type>> typeMap = HashMap<Type, List<Type>>();
+        stream: widget.bloc.typesStream,
+        initialData: UnmodifiableListView<Type>([]),
+        builder: (context, AsyncSnapshot<UnmodifiableListView<Type>> snapshot) {
+          HashMap<Type, List<Type>> typeMap = HashMap<Type, List<Type>>();
 
-        //using child_id
-        //for now excluding category mains, hence no select all function
+          //using child_id
+          //for now excluding category mains, hence no select all function
 
-        snapshot.data.toList().forEach((type) {
-          if (!type.child_id.isEmpty) {
-            typeMap[type] = type.child_id.map((child_id) =>
-                snapshot.data.toList().firstWhere((t) => t.id == child_id))
-                .toList();
-          } else {
-            checkedTypeMap[type.id] = false;
-          }
+          snapshot.data.toList().forEach((type) {
+            if (!type.child_id.isEmpty) {
+              typeMap[type] = type.child_id
+                  .map((child_id) => snapshot.data
+                      .toList()
+                      .firstWhere((t) => t.id == child_id))
+                  .toList();
+            } else {
+              checkedTypeMap[type.id] = false;
+            }
+          });
+          return Column(
+              children: snapshot.data
+                  .toList()
+                  .map((x) => _buildFilterListItem(x, typeMap, checkedTypeMap))
+                  .toList());
         });
-        return Column(
-          children: snapshot.data.toList().map((x) =>
-              _buildFilterListItem(x, typeMap, checkedTypeMap)).toList()
-        );
-      }
-    );
   }
 
   //very inefficient for now, because the hashmap will be repeated across each hashmap item
-  Widget _buildFilterListItem(Type type, HashMap<Type, List<Type>> typeMap, Map<String, bool> checkedTypeMap) {
-    return FilterList(type: type, typeMap: typeMap, checkedTypeMap: checkedTypeMap);
+  Widget _buildFilterListItem(Type type, HashMap<Type, List<Type>> typeMap,
+      Map<String, bool> checkedTypeMap) {
+    return FilterList(
+        type: type, typeMap: typeMap, checkedTypeMap: checkedTypeMap);
   }
 
-  Widget _buildCompanyFilter(BuildContext context, Map<String,bool> checkedCompanyMap) {
+  Widget _buildCompanyFilter(
+      BuildContext context, Map<String, bool> checkedCompanyMap) {
     return ExpansionTile(
       title: Text('Companies'),
       children: <Widget>[
         StreamBuilder<UnmodifiableListView<Company>>(
             stream: widget.bloc.companyStream,
             initialData: UnmodifiableListView<Company>([]),
-            builder: (context, AsyncSnapshot<UnmodifiableListView<Company>> snapshot) {
-
+            builder: (context,
+                AsyncSnapshot<UnmodifiableListView<Company>> snapshot) {
               snapshot.data.forEach((company) {
                 checkedCompanyMap[company.id] = false;
               });
 
               return Column(
-                children: snapshot.data.toList().map((x) =>
-                    _buildCompanyFilterListItem(x, checkedCompanyMap)).toList(),
+                children: snapshot.data
+                    .toList()
+                    .map((x) =>
+                        _buildCompanyFilterListItem(x, checkedCompanyMap))
+                    .toList(),
               );
-            }
-        )
+            })
       ],
     );
   }
 
-  Widget _buildCompanyFilterListItem(Company company, Map<String, bool> checkedCompanyMap) {
-    return FilterCompanyList(company: company, checkedCompanyMap: checkedCompanyMap);
+  Widget _buildCompanyFilterListItem(
+      Company company, Map<String, bool> checkedCompanyMap) {
+    return FilterCompanyList(
+        company: company, checkedCompanyMap: checkedCompanyMap);
   }
 
-  Widget _buildDurationFilter(BuildContext context, Map<String, bool> checkedDurationMap) {
-
+  Widget _buildDurationFilter(
+      BuildContext context, Map<String, bool> checkedDurationMap) {
     checkedDurationMap['Today'] = false;
     checkedDurationMap['This Week'] = false;
 
@@ -792,14 +942,13 @@ class PromotionBloc {
   Stream<UnmodifiableListView<Promotion>> get Newpromotions => _NewpromotionsSubject.stream;
   Stream<UnmodifiableListView<Promotion>> get Hotpromotions => _HotpromotionsSubject.stream;
   Stream<UnmodifiableListView<Type>> get typesStream => _typesSubject.stream;
-  Stream<UnmodifiableListView<Company>> get companyStream => _companySubject.stream;
+  Stream<UnmodifiableListView<Company>> get companyStream = _companySubject.stream;
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _NewpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _HotpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _typesSubject = BehaviorSubject<UnmodifiableListView<Type>>();
   final _companySubject = BehaviorSubject<UnmodifiableListView<Company>>();
-
 
   PromotionBloc() {
     _updatePromotions().then((_) {
@@ -822,15 +971,17 @@ class PromotionBloc {
         await Firestore.instance.collection('all_types').getDocuments();
 
     companyQShot.documents.forEach((doc) {
-      _companies[doc.documentID] = Company(doc.documentID, doc.data['name'], doc.data['locations'], doc.data['logoURL']);
-
+      _companies[doc.documentID] = Company(doc.documentID, doc.data['name'],
+          doc.data['locations'], doc.data['logoURL']);
     });
 
     _companyStream = _companies.values.toList();
 
     typeQShot.documents.forEach((doc) {
-      _types[doc.documentID] = Type(doc.documentID, doc.data['title'], doc.data['child_id']);
-      _typesStream.add(Type(doc.documentID, doc.data['title'], doc.data['child_id']));
+      _types[doc.documentID] =
+          Type(doc.documentID, doc.data['title'], doc.data['child_id']);
+      _typesStream
+          .add(Type(doc.documentID, doc.data['title'], doc.data['child_id']));
     });
 
     _promotions = promotionQShot.documents
@@ -895,7 +1046,7 @@ class Type {
   Type(this.id, this.title, this.child_id);
 }
 
-class ExtractPromoDetails extends StatelessWidget {
+class ExtractPromoDetails extends StatefulWidget {
   static const routeName = '/extractArguments';
   String userid;
 
@@ -904,11 +1055,78 @@ class ExtractPromoDetails extends StatelessWidget {
   }
 
   @override
+  ExtractPromoDetailsState createState() =>
+      new ExtractPromoDetailsState(userid);
+}
+
+class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
+  String userid;
+
+  ExtractPromoDetailsState(String userid) {
+    this.userid = userid;
+  }
+
+  int likes = 0;
+  int dislikes = 0;
+  bool liked = false;
+  bool disliked = false;
+  static var args;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      setState(() {
+        args = ModalRoute.of(context).settings.arguments;
+      });
+      findstufffromdatabase(args);
+    });
+  }
+
+  // Find if user liked/disliked promo, number of likes/dislikes
+  void findstufffromdatabase(args) async {
+    int databaselikes = 0;
+    int databasedislikes = 0;
+    bool userliked = false;
+    bool userdisliked = false;
+    final snapShot = await Firestore.instance
+        .collection('all_promotions')
+        .document(args.promoid)
+        .get();
+    databaselikes = snapShot.data['likes'];
+    databasedislikes = snapShot.data['dislikes'];
+    final snapShot2 =
+        await Firestore.instance.collection('all_users').document(userid).get();
+    if (snapShot2 == null || !snapShot2.exists) {
+      Firestore.instance
+          .collection("all_users")
+          .document(userid)
+          .setData({'liked_promotions': []});
+      Firestore.instance
+          .collection('all_users')
+          .document(userid)
+          .setData({'disliked_promotions': []});
+    } else if (snapShot2.data['liked_promotions'].contains(args.promoid)) {
+      userliked = true;
+    } else if (snapShot2.data['disliked_promotions'].contains(args.promoid)) {
+      userdisliked = true;
+    }
+
+    setState(() {
+      likes = databaselikes;
+      dislikes = databasedislikes;
+      liked = userliked;
+      disliked = userdisliked;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final Promotion args = ModalRoute
-        .of(context)
-        .settings
-        .arguments;
+    // TODO: implement build
+
+    String userid = widget.userid;
+
+    final Promotion args = ModalRoute.of(context).settings.arguments;
 
     Future<void> share() async {
       String locations = '';
@@ -934,6 +1152,7 @@ class ExtractPromoDetails extends StatelessWidget {
     // Check if userid is in database, if it is not, add userid
     // Add promotion id
     void addpromo() async {
+      List<DateTime> dates = new List();
       final snapShot = await Firestore.instance
           .collection('all_users')
           .document(userid)
@@ -949,6 +1168,24 @@ class ExtractPromoDetails extends StatelessWidget {
           'saved_promotion': FieldValue.arrayUnion([args.promoid])
         });
       }
+      final DocumentSnapshot ds = await Firestore.instance
+          .collection('all_promotions')
+          .document(args.promoid)
+          .get();
+      String promostart = ds.data['start_date'];
+      String promoend = ds.data['end_date'];
+      DateTime startdate = new DateTime(
+          int.parse(promostart.substring(6)),
+          int.parse(promostart.substring(3, 5)),
+          int.parse(promostart.substring(0, 2)));
+      DateTime enddate = new DateTime(
+          int.parse(promoend.substring(6)),
+          int.parse(promoend.substring(3, 5)),
+          int.parse(promoend.substring(0, 2)));
+      _MyHomePageState()
+          ._showstartNotification(args.promoid, args.title, startdate);
+      _MyHomePageState()
+          ._showendNotification(args.promoid, args.title, enddate);
     }
 
     // Deleting a promotion
@@ -956,6 +1193,40 @@ class ExtractPromoDetails extends StatelessWidget {
       Firestore.instance.collection("all_users").document(userid).updateData({
         'saved_promotion': FieldValue.arrayRemove([args.promoid])
       });
+      _MyHomePageState()._deleteNotification(args.promoid);
+    }
+
+    void updatepromo() async {
+      if (liked) {
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'disliked_promotions': FieldValue.arrayRemove([args.promoid])
+        });
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'liked_promotions': FieldValue.arrayUnion([args.promoid])
+        });
+      } else if (disliked) {
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'liked_promotions': FieldValue.arrayRemove([args.promoid])
+        });
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'disliked_promotions': FieldValue.arrayUnion([args.promoid])
+        });
+      } else if (!liked && !disliked) {
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'liked_promotions': FieldValue.arrayRemove([args.promoid])
+        });
+        Firestore.instance.collection('all_users').document(userid).updateData({
+          'disliked_promotions': FieldValue.arrayRemove([args.promoid])
+        });
+      }
+      Firestore.instance
+          .collection('all_promotions')
+          .document(args.promoid)
+          .updateData({'dislikes': dislikes});
+      Firestore.instance
+          .collection('all_promotions')
+          .document(args.promoid)
+          .updateData({'likes': likes});
     }
 
     return Scaffold(
@@ -966,14 +1237,83 @@ class ExtractPromoDetails extends StatelessWidget {
               icon: Icon(Icons.add, color: Colors.white),
               onPressed: () {
                 addpromo();
+                Toast.show("Promotion added to calendar", context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
               },
             ),
             IconButton(
                 icon: Icon(Icons.delete, color: Colors.white),
                 onPressed: () {
                   deletepromo();
+                  Toast.show("Promotion deleted from calendar", context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
                   Navigator.pushNamed(context, MyHomePage.routeName);
+
                 }),
+            Column(children: <Widget>[
+              Expanded(
+                  child: IconButton(
+                      icon: Icon(Icons.thumb_up, color: Colors.white),
+                      onPressed: () {
+                        if (!liked && !disliked) {
+                          setState(() {
+                            likes++;
+                          });
+                          liked = true;
+                        } else if (liked) {
+                          setState(() {
+                            likes--;
+                          });
+                          liked = false;
+                        } else if (!liked && disliked) {
+                          setState(() {
+                            likes++;
+                            dislikes--;
+                          });
+                          liked = true;
+                          disliked = false;
+                        }
+                        updatepromo();
+                      })),
+              Text(likes.toString())
+            ]),
+            Column(children: <Widget>[
+              Expanded(
+                  child: IconButton(
+                icon: Icon(Icons.thumb_down, color: Colors.white),
+                onPressed: () {
+                  if (!disliked && !liked) {
+                    setState(() {
+                      dislikes++;
+                    });
+                    disliked = true;
+                  } else if (disliked) {
+                    setState(() {
+                      dislikes--;
+                    });
+                    disliked = false;
+                  } else if (!disliked && liked) {
+                    setState(() {
+                      dislikes++;
+                      likes--;
+                    });
+                    liked = false;
+                    disliked = true;
+                  }
+                  updatepromo();
+                },
+              )),
+              Text(dislikes.toString())
+            ]),
+            IconButton(
+              icon: Icon(Icons.chat_bubble_outline, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CommentPage(args.promoid)));
+                });
+              },
+            ),
             IconButton(
               icon: Icon(Icons.share, color: Colors.white),
               onPressed: share,
