@@ -377,17 +377,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       // ExtractPromoDetails.routeName
                   Navigator.pushNamed(context, '/promoDetails',
                       arguments: new Promotion(
-                          promotion.data['title'],
+                          event,
                           new Company(
-                              promotion.data['company'],
-                              company.documentID,
-                              company.data['name'],
-                              company.data['locations'],
+                              company.data['title'],
+                              company.data['location'],
                               company.data['logoURL']),
                           promotion.data['start_date'],
                           promotion.data['end_date'],
-                          promotion.data['item_type'],
-                          event));
+                          promotion.data['types'],
+                          List<String>.from(promotion.data['comments']),
+                          promotion.data['dislikes'],
+                          promotion.data['likes'],
+                          promotion.data['clicks']
+                      ));
                 });
               });
               print('$event tapped!');

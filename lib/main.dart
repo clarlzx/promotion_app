@@ -140,72 +140,102 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future onSelectNotification(String payLoad) async {
-    final DocumentSnapshot ds = await Firestore.instance
-        .collection('all_promotions')
-        .document(payLoad)
-        .get();
-    final DocumentSnapshot ds1 = await Firestore.instance
-        .collection('all_companies')
-        .document(ds.data['company'])
-        .get();
-    if (payLoad != null) {
-      print(payLoad);
-    }
-    await Navigator.pushNamed(context, '/promoDetails',
-        arguments: new Promotion(
-            ds.data['title'],
-            new Company(ds1.data['company'], ds1.data['name'],
-                ds1.data['locations'], ds1.data['logoURL']),
-            ds.data['start_date'],
-            ds.data['end_date'],
-            ds.data['item_type'],
-            payLoad));
+    //just want to get promotion for this
+    Promotion selectedPromo;
+    widget.bloc.promotions.first.then((promotionList) {
+      selectedPromo = promotionList.firstWhere((promo) => promo.title == payLoad);
+    });
+    return Navigator.pushNamed(context, '/promoDetails',
+      arguments: selectedPromo
+    );
+//    final DocumentSnapshot ds = await Firestore.instance
+//        .collection('all_promotions')
+//        .document(payLoad)
+//        .get();
+//    final DocumentSnapshot ds1 = await Firestore.instance
+//        .collection('all_companies')
+//        .document(ds.data['company'])
+//        .get();
+//    if (payLoad != null) {
+//      print(payLoad);
+//    }
+//    await Navigator.pushNamed(context, '/promoDetails',
+//        arguments: new Promotion(
+//            ds.data['title'],
+//            new Company(ds1.data['company'], ds1.data['name'],
+//                ds1.data['locations'], ds1.data['logoURL']),
+//            ds.data['start_date'],
+//            ds.data['end_date'],
+//            ds.data['item_type'],
+//            payLoad));
   }
 
-  Future onDidReceiveLocalNotification(
-      int id, String title, String body, String payLoad) async {
-    final DocumentSnapshot ds = await Firestore.instance
-        .collection('all_promotions')
-        .document(payLoad)
-        .get();
-    final DocumentSnapshot ds1 = await Firestore.instance
-        .collection('all_companies')
-        .document(ds.data['company'])
-        .get();
+  Future onDidReceiveLocalNotification(int id, String title, String body, String payLoad) async {
+
+    Promotion selectedPromo;
+    widget.bloc.promotions.first.then((promotionLst) {
+      selectedPromo = promotionLst.firstWhere((promo) => promo.title == payLoad);
+    });
+
     return showDialog(
         context: context,
         builder: (BuildContext context) => CupertinoAlertDialog(
-              title: Text(title),
-              content: Text(body),
-              actions: [
-                CupertinoDialogAction(
-                    isDefaultAction: true,
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/promoDetails',
-                          arguments: new Promotion(
-                              ds.data['title'],
-                              new Company(ds1.data['company'], ds1.data['name'],
-                                  ds1.data['locations'], ds1.data['logoURL']),
-                              ds.data['start_date'],
-                              ds.data['end_date'],
-                              ds.data['item_type'],
-                              payLoad));
-                    },
-                    child: Text("okay"))
-              ],
-            ));
+          title: Text(title),
+          content: Text(body),
+          actions: [
+            CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/promoDetails',
+                      arguments: selectedPromo);
+                },
+                child: Text("okay"))
+          ],
+        ));
+
+//    final DocumentSnapshot ds = await Firestore.instance
+//        .collection('all_promotions')
+//        .document(payLoad)
+//        .get();
+//    final DocumentSnapshot ds1 = await Firestore.instance
+//        .collection('all_companies')
+//        .document(ds.data['company'])
+//        .get();
+//
+//    return showDialog(
+//        context: context,
+//        builder: (BuildContext context) => CupertinoAlertDialog(
+//              title: Text(title),
+//              content: Text(body),
+//              actions: [
+//                CupertinoDialogAction(
+//                    isDefaultAction: true,
+//                    onPressed: () {
+//                      Navigator.pushNamed(context, '/promoDetails',
+//                          arguments: new Promotion(
+//                              ds.data['title'],
+//                              new Company(ds1.data['company'], ds1.data['name'],
+//                                  ds1.data['locations'], ds1.data['logoURL']),
+//                              ds.data['start_date'],
+//                              ds.data['end_date'],
+//                              ds.data['item_type'],
+//                              payLoad));
+//                    },
+//                    child: Text("okay"))
+//              ],
+//            ));
   }
 
   WebScraper webScraper;
   bool loaded = true; //change to false
   String popNum;
 
-//
-//  @override
-//  void initState() {
-//    super.initState();
+  @override
+  void initState() {
+    super.initState();
 //    _getData();
-//  }
+    initializing();
+  }
 
 //  _getData() async {
 //    List<String> all_href = []; //probably need to set as a global variable later
@@ -370,7 +400,9 @@ class _MyHomePageState extends State<MyHomePage> {
 //                Firestore.instance.collection("web_promotion").document(
 //                  title
 //                ).setData({'title': title, 'company': company, 'types': types,
-//                  'clicks': 0, 'start_date': start_date, 'end_date': end_date});
+//                  'clicks': 0, 'start_date': start_date, 'end_date': end_date,
+//                  'comments': [], 'dislikes': 0, 'likes' : 0
+//                });
 //              }
 //            }
 //        ).catchError((error) => print(" Got error: $error"));
@@ -485,11 +517,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Icon customIcon = Icon(Icons.search, color: Colors.white);
   Widget customWidget = Text('View Promotions');
 
-  @override
-  void initState() {
-    super.initState();
-    initializing();
-  }
 
   void initializing() async {
     androidInitializationSettings = AndroidInitializationSettings('app_icon');
@@ -742,10 +769,10 @@ class _MyHomePageState extends State<MyHomePage> {
               typeMap[type] = type.child_id
                   .map((child_id) => snapshot.data
                       .toList()
-                      .firstWhere((t) => t.id == child_id))
+                      .firstWhere((t) => t.title == child_id))
                   .toList();
             } else {
-              checkedTypeMap[type.id] = false;
+              checkedTypeMap[type.title] = false;
             }
           });
           return Column(
@@ -774,7 +801,7 @@ class _MyHomePageState extends State<MyHomePage> {
             builder: (context,
                 AsyncSnapshot<UnmodifiableListView<Company>> snapshot) {
               snapshot.data.forEach((company) {
-                checkedCompanyMap[company.id] = false;
+                checkedCompanyMap[company.title] = false;
               });
 
               return Column(
@@ -942,7 +969,7 @@ class PromotionBloc {
   Stream<UnmodifiableListView<Promotion>> get Newpromotions => _NewpromotionsSubject.stream;
   Stream<UnmodifiableListView<Promotion>> get Hotpromotions => _HotpromotionsSubject.stream;
   Stream<UnmodifiableListView<Type>> get typesStream => _typesSubject.stream;
-  Stream<UnmodifiableListView<Company>> get companyStream = _companySubject.stream;
+  Stream<UnmodifiableListView<Company>> get companyStream => _companySubject.stream;
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _NewpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
@@ -961,38 +988,53 @@ class PromotionBloc {
   }
 
   Future<Null> _updatePromotions() async {
+
     final promotionQShot =
-        await Firestore.instance.collection('all_promotions').getDocuments();
+        await Firestore.instance.collection('web_promotion').getDocuments();
     final NewpromotionQShot =
-      await Firestore.instance.collection('all_promotions').orderBy('start_date', descending: true).getDocuments();
+      await Firestore.instance.collection('web_promotion').orderBy('start_date', descending: true).getDocuments();
     final companyQShot =
-        await Firestore.instance.collection('all_companies').getDocuments();
+        await Firestore.instance.collection('web_companies').getDocuments();
     final typeQShot =
-        await Firestore.instance.collection('all_types').getDocuments();
+        await Firestore.instance.collection('web_type').getDocuments();
 
     companyQShot.documents.forEach((doc) {
-      _companies[doc.documentID] = Company(doc.documentID, doc.data['name'],
-          doc.data['locations'], doc.data['logoURL']);
+      List<String> location = [];
+      if (doc.data['location'] != null) {
+        location = List<String>.from(doc.data['location']);
+      }
+      _companies[doc.data['title']] = Company(doc.data['title'],
+          location, doc.data['logoURL']);
     });
 
     _companyStream = _companies.values.toList();
 
     typeQShot.documents.forEach((doc) {
-      _types[doc.documentID] =
-          Type(doc.documentID, doc.data['title'], doc.data['child_id']);
+      List<String> related_words = [];
+      List<String> child_id = [];
+      if (doc.data['child_id'] != null) {
+        child_id = List<String>.from(doc.data['child_id']);
+      } else {
+        related_words = List<String>.from(doc.data['related_words']);
+      }
+      _types[doc.data['title']] =
+          Type(doc.data['title'], child_id, related_words);
       _typesStream
-          .add(Type(doc.documentID, doc.data['title'], doc.data['child_id']));
+          .add(Type(doc.data['title'], child_id, related_words));
     });
 
     _promotions = promotionQShot.documents
         .map((doc) => Promotion(
-            doc.data['title'],
-            _companies[doc.data['company']],
-            doc.data['start_date'],
-            doc.data['end_date'],
-            doc.data['item_type'].map((type) => _types[type]).toList(),
-            doc.documentID))
-        .toList();
+        doc.data['title'],
+        _companies[doc.data['company']],
+        doc.data['start_date'],
+        doc.data['end_date'],
+        doc.data['types'].map((type) => _types[type]).toList(),
+        List<String>.from(doc.data['comments']),
+        doc.data['dislikes'],
+        doc.data['likes'],
+        doc.data['clicks']
+    )).toList();
 
     _Newpromotions = NewpromotionQShot.documents
         .map((doc) => Promotion(
@@ -1000,9 +1042,12 @@ class PromotionBloc {
         _companies[doc.data['company']],
         doc.data['start_date'],
         doc.data['end_date'],
-        doc.data['item_type'].map((type) => _types[type]).toList(),
-        doc.documentID))
-        .toList();
+        doc.data['types'].map((type) => _types[type]).toList(),
+        List<String>.from(doc.data['comments']),
+        doc.data['dislikes'],
+        doc.data['likes'],
+        doc.data['clicks']
+    )).toList();
 
   }
 
@@ -1014,36 +1059,29 @@ class Promotion {
   final String start_date;
   final String end_date;
   final List types;
-  final String promoid;
+  final List<String> comments;
+  final int dislikes;
+  final int likes;
+  final int clicks;
 
   Promotion(this.title, this.company, this.start_date, this.end_date,
-      this.types, this.promoid);
+      this.types, this.comments, this.dislikes, this.likes, this.clicks);
 }
 
 class Company {
-  final String id;
-  final String name;
-  final List locations;
+  final String title;
+  final List<String> location;
   final String logoURL;
 
-  Company(this.id, this.name, this.locations, this.logoURL);
-
-//  Future<String> getLogoUrl() async {
-//    return await Firestore.instance.collection('all_companies').document(this.companyID).get().then((DocumentSnapshot ds) {
-//      this.name = ds.data["name"];
-//      this.locations = ds.data["locations"];
-//      this.logoURL = ds.data["logoURL"];
-//      return this.logoURL;});
-//  }
-
+  Company(this.title, this.location, this.logoURL);
 }
 
 class Type {
-  final String id;
   final String title;
-  final List child_id;
+  final List<String> child_id;
+  final List<String> related_words;
 
-  Type(this.id, this.title, this.child_id);
+  Type(this.title, this.child_id, this.related_words);
 }
 
 class ExtractPromoDetails extends StatefulWidget {
@@ -1130,7 +1168,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
 
     Future<void> share() async {
       String locations = '';
-      for (String location in args.company.locations) {
+      for (String location in args.company.location) {
         locations += location + '; ';
       }
       await FlutterShare.share(
@@ -1160,17 +1198,17 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       // If userid does not exist
       if (snapShot == null || !snapShot.exists) {
         Firestore.instance.collection("all_users").document(userid).setData({
-          'saved_promotion': [args.promoid]
+          'saved_promotion': [args.title]
         });
       } else {
         // If userid exists
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'saved_promotion': FieldValue.arrayUnion([args.promoid])
+          'saved_promotion': FieldValue.arrayUnion([args.title])
         });
       }
       final DocumentSnapshot ds = await Firestore.instance
           .collection('all_promotions')
-          .document(args.promoid)
+          .document(args.title)
           .get();
       String promostart = ds.data['start_date'];
       String promoend = ds.data['end_date'];
@@ -1183,49 +1221,49 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
           int.parse(promoend.substring(3, 5)),
           int.parse(promoend.substring(0, 2)));
       _MyHomePageState()
-          ._showstartNotification(args.promoid, args.title, startdate);
+          ._showstartNotification(args.title, args.title, startdate);
       _MyHomePageState()
-          ._showendNotification(args.promoid, args.title, enddate);
+          ._showendNotification(args.title, args.title, enddate);
     }
 
     // Deleting a promotion
     void deletepromo() async {
       Firestore.instance.collection("all_users").document(userid).updateData({
-        'saved_promotion': FieldValue.arrayRemove([args.promoid])
+        'saved_promotion': FieldValue.arrayRemove([args.title])
       });
-      _MyHomePageState()._deleteNotification(args.promoid);
+      _MyHomePageState()._deleteNotification(args.title);
     }
 
     void updatepromo() async {
       if (liked) {
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'disliked_promotions': FieldValue.arrayRemove([args.promoid])
+          'disliked_promotions': FieldValue.arrayRemove([args.title])
         });
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'liked_promotions': FieldValue.arrayUnion([args.promoid])
+          'liked_promotions': FieldValue.arrayUnion([args.title])
         });
       } else if (disliked) {
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'liked_promotions': FieldValue.arrayRemove([args.promoid])
+          'liked_promotions': FieldValue.arrayRemove([args.title])
         });
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'disliked_promotions': FieldValue.arrayUnion([args.promoid])
+          'disliked_promotions': FieldValue.arrayUnion([args.title])
         });
       } else if (!liked && !disliked) {
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'liked_promotions': FieldValue.arrayRemove([args.promoid])
+          'liked_promotions': FieldValue.arrayRemove([args.title])
         });
         Firestore.instance.collection('all_users').document(userid).updateData({
-          'disliked_promotions': FieldValue.arrayRemove([args.promoid])
+          'disliked_promotions': FieldValue.arrayRemove([args.title])
         });
       }
       Firestore.instance
           .collection('all_promotions')
-          .document(args.promoid)
+          .document(args.title)
           .updateData({'dislikes': dislikes});
       Firestore.instance
           .collection('all_promotions')
-          .document(args.promoid)
+          .document(args.title)
           .updateData({'likes': likes});
     }
 
@@ -1310,7 +1348,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CommentPage(args.promoid)));
+                          builder: (context) => CommentPage(args.title)));
                 });
               },
             ),
@@ -1360,7 +1398,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                         text: 'Company: ',
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold)),
-                                    TextSpan(text: args.company.name),
+                                    TextSpan(text: args.company.title),
                                   ],
                                 ),
                               ),
@@ -1385,7 +1423,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                       fontSize: 19.0,
                                       color: Colors.black,
                                       fontWeight: FontWeight.bold)),
-                              for (String location in args.company.locations)
+                              for (String location in args.company.location)
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[

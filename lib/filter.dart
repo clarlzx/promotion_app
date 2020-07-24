@@ -30,10 +30,10 @@ class _FilterState extends State<FilterList> {
           for (Type childType in widget.typeMap[widget.type])
             CheckboxListTile(
               title: Text(childType.title, style: TextStyle()),
-              value: widget.checkedTypeMap[childType.id],
+              value: widget.checkedTypeMap[childType.title],
               onChanged: (val) {
                 setState(() {
-                  widget.checkedTypeMap[childType.id] = val;
+                  widget.checkedTypeMap[childType.title] = val;
                 });
               },
             )
@@ -65,11 +65,11 @@ class _FilterCompanyState extends State<FilterCompanyList> {
   @override
   Widget build(BuildContext context) {
     return CheckboxListTile(
-      title: Text(widget.company.name),
-      value: widget.checkedCompanyMap[widget.company.id],
+      title: Text(widget.company.title),
+      value: widget.checkedCompanyMap[widget.company.title],
       onChanged: (newValue) {
         setState(() {
-          widget.checkedCompanyMap[widget.company.id] = newValue;
+          widget.checkedCompanyMap[widget.company.title] = newValue;
         });
       },
     );

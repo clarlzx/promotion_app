@@ -72,8 +72,8 @@ class PromotionSearch extends SearchDelegate<Promotion> {
             x.types.map((types) => types.title).toList().contains(query) ||
             startsWith(x.types.map((types) => types.title).toList(), query) ||
             startsWith(x.types.map((types) => types.title.toLowerCase()).toList(), query) ||
-            x.company.name.contains(query) ||
-            x.company.name.toLowerCase().contains(query)
+            x.company.title.contains(query) ||
+            x.company.title.toLowerCase().contains(query)
         );
 
 

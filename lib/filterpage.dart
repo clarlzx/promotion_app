@@ -73,7 +73,7 @@ class ExtractFilterPromotion extends StatelessWidget {
             Position curr_position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
             for (Promotion promo in result) {
-              for (String location in promo.company.locations) {
+              for (String location in promo.company.location) {
                 List<Placemark> placemark = await Geolocator().placemarkFromAddress(location);
                 Position temp_position = placemark[0].position;
                 double distance = await Geolocator().distanceBetween(curr_position.latitude,
@@ -171,7 +171,7 @@ class ExtractFilterPromotion extends StatelessWidget {
 
   bool companyFilter(Promotion promo, Map<String, bool> checkedCompanyMap) {
     for (String key in checkedCompanyMap.keys) {
-      if (checkedCompanyMap[key] && promo.company.id == key) {
+      if (checkedCompanyMap[key] && promo.company.title == key) {
         return true;
       }
     }
