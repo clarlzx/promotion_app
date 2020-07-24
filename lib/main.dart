@@ -765,16 +765,23 @@ class _MyHomePageState extends State<MyHomePage> {
           //for now excluding category mains, hence no select all function
 
           snapshot.data.toList().forEach((type) {
-            if (!type.child_id.isEmpty) {
-              typeMap[type] = type.child_id
-                  .map((child_id) => snapshot.data
-                      .toList()
-                      .firstWhere((t) => t.title == child_id))
-                  .toList();
-            } else {
-              checkedTypeMap[type.title] = false;
+            try {
+              if (!type.child_id.isEmpty) {
+                typeMap[type] = type.child_id
+                    .map((child_id) =>
+                    snapshot.data
+                        .toList()
+                        .firstWhere((t) => t.title == child_id))
+                    .toList();
+              } else {
+                checkedTypeMap[type.title] = false;
+              }
+            } catch (e){
+              print(type.title);
+              print(e);
             }
           });
+
           return Column(
               children: snapshot.data
                   .toList()
@@ -1019,22 +1026,28 @@ class PromotionBloc {
       }
       _types[doc.data['title']] =
           Type(doc.data['title'], child_id, related_words);
-      _typesStream
-          .add(Type(doc.data['title'], child_id, related_words));
     });
 
+    _typesStream = _types.values.toList();
+
     _promotions = promotionQShot.documents
-        .map((doc) => Promotion(
-        doc.data['title'],
-        _companies[doc.data['company']],
-        doc.data['start_date'],
-        doc.data['end_date'],
-        doc.data['types'].map((type) => _types[type]).toList(),
-        List<String>.from(doc.data['comments']),
-        doc.data['dislikes'],
-        doc.data['likes'],
-        doc.data['clicks']
-    )).toList();
+        .map((doc) {
+          List types = [];
+          if (doc.data['types'].isNotEmpty) {
+            types = doc.data['types'].map((type) => _types[type]).toList();
+          }
+          return Promotion(
+          doc.data['title'],
+          _companies[doc.data['company']],
+          doc.data['start_date'],
+          doc.data['end_date'],
+          types,
+          List<String>.from(doc.data['comments']),
+          doc.data['dislikes'],
+          doc.data['likes'],
+          doc.data['clicks']);
+        }
+    ).toList();
 
     _Newpromotions = NewpromotionQShot.documents
         .map((doc) => Promotion(

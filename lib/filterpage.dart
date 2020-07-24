@@ -162,8 +162,8 @@ class ExtractFilterPromotion extends StatelessWidget {
 
   bool typeFilter(Promotion promo, Map<String, bool> checkedTypeMap) {
     for (String key in checkedTypeMap.keys) {
-      if (checkedTypeMap[key] && promo.types.map((t) => t.id).contains(key)) {
-        return true;
+      if (checkedTypeMap[key] && promo.types.map((t) => t.title).contains(key)) {
+          return true;
       }
     }
     return false;
