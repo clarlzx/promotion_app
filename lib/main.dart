@@ -89,7 +89,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> endnotification(
       String promoid, String title, DateTime date) async {
-    DateTime datetime = date.add(new Duration(hours: 22, minutes: 10));
+//    DateTime datetime = DateTime.now();
+    DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
     AndroidNotificationDetails(
@@ -111,7 +112,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> startnotification(
       String promoid, String title, DateTime date) async {
-    DateTime datetime = date.add(new Duration(hours: 22, minutes: 10));
+//    DateTime datetime = DateTime.now();
+    DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
         AndroidNotificationDetails(
@@ -123,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
     NotificationDetails notificationDetails =
         NotificationDetails(androidNotificationDetails, iosNotificationDetails);
     await flutterLocalNotificationsPlugin.schedule(
-        promoid.hashCode,
+        promoid.hashCode + 1,
         "Don't miss this awesome promotion!",
         title,
         datetime,
@@ -137,6 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> deletenotification(String promoid) async {
     await flutterLocalNotificationsPlugin.cancel(promoid.hashCode);
+    await flutterLocalNotificationsPlugin.cancel(promoid.hashCode + 1);
   }
 
   Future onSelectNotification(String payLoad) async {
@@ -1141,8 +1144,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     bool userliked = false;
     bool userdisliked = false;
     final snapShot = await Firestore.instance
-        .collection('all_promotions')
-        .document(args.promoid)
+        .collection('web_promotion')
+        .document(args.title)
         .get();
     databaselikes = snapShot.data['likes'];
     databasedislikes = snapShot.data['dislikes'];
@@ -1157,9 +1160,9 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
           .collection('all_users')
           .document(userid)
           .setData({'disliked_promotions': []});
-    } else if (snapShot2.data['liked_promotions'].contains(args.promoid)) {
+    } else if (snapShot2.data['liked_promotions'].contains(args.title)) {
       userliked = true;
-    } else if (snapShot2.data['disliked_promotions'].contains(args.promoid)) {
+    } else if (snapShot2.data['disliked_promotions'].contains(args.title)) {
       userdisliked = true;
     }
 
@@ -1191,9 +1194,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
             ' from ' +
             args.start_date +
             ' to ' +
-            args.end_date +
-            ' at these locations: ' +
-            locations,
+            args.end_date,
 //          linkUrl: 'https://flutter.dev/',
 //          chooserTitle: 'Example Chooser Title'
       );
@@ -1220,7 +1221,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
         });
       }
       final DocumentSnapshot ds = await Firestore.instance
-          .collection('all_promotions')
+          .collection('web_promotion')
           .document(args.title)
           .get();
       String promostart = ds.data['start_date'];
@@ -1233,10 +1234,15 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
           int.parse(promoend.substring(6)),
           int.parse(promoend.substring(3, 5)),
           int.parse(promoend.substring(0, 2)));
-      _MyHomePageState()
-          ._showstartNotification(args.title, args.title, startdate);
-      _MyHomePageState()
-          ._showendNotification(args.title, args.title, enddate);
+      if (startdate.isBefore(enddate)) {
+        _MyHomePageState()
+            ._showstartNotification(args.title, args.title, startdate);
+        _MyHomePageState()
+            ._showendNotification(args.title, args.title, enddate);
+      } else {
+        _MyHomePageState()
+            ._showstartNotification(args.title, args.title, startdate);
+      }
     }
 
     // Deleting a promotion
@@ -1271,11 +1277,11 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
         });
       }
       Firestore.instance
-          .collection('all_promotions')
+          .collection('web_promotion')
           .document(args.title)
           .updateData({'dislikes': dislikes});
       Firestore.instance
-          .collection('all_promotions')
+          .collection('web_promotion')
           .document(args.title)
           .updateData({'likes': likes});
     }

@@ -73,11 +73,16 @@ class CommentPageState extends State<CommentPage> {
   }
 
   void addtodatabase(String comment) async {
+    DocumentSnapshot ds = await Firestore.instance
+        .collection('all_promotions')
+        .document(promoid).get();
+    List l1 = ds.data['comments'];
+    l1.add(comment);
     Firestore.instance
         .collection('all_promotions')
         .document(promoid)
         .updateData({
-      'comments': FieldValue.arrayUnion([comment])
+      'comments': l1
     });
   }
 

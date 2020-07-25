@@ -53,7 +53,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   List _selectedEvents;
   AnimationController _animationController;
   CalendarController _calendarController;
-  Map<String, String> anothereventlist = {};
 
   @override
   void initState() {
@@ -61,30 +60,26 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final _selectedDay = new DateTime.now();
 
     String userid = widget.userid;
-    List savedpromoids;
-    String promotitle;
+    List savedpromotitles;
     String promostart;
     String promoend;
 
     // First search for all promotions saved by user
     void search() async {
-      Map<String, String> eventlist = {};
       final DocumentSnapshot snapShot = await Firestore.instance
           .collection('all_users')
           .document(userid)
           .get();
-      savedpromoids = snapShot.data['saved_promotion'];
+      savedpromotitles = snapShot.data['saved_promotion'];
       // For every promo get the title, start and end dates and add into map
-      for (int i = 0; i < savedpromoids.length; i++) {
-        String promoid = savedpromoids[i];
+      for (int i = 0; i < savedpromotitles.length; i++) {
+        String promotitle = savedpromotitles[i];
         final DocumentSnapshot ds = await Firestore.instance
-            .collection('all_promotions')
-            .document(promoid)
+            .collection('web_promotion')
+            .document(promotitle)
             .get();
-        promotitle = ds.data['title'];
         promostart = ds.data['start_date'];
         promoend = ds.data['end_date'];
-        eventlist[savedpromoids[i]] = promotitle;
 
         // If promotion within one month
         if (promostart.substring(3, 5) == promoend.substring(3, 5)) {
@@ -99,9 +94,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                       int.parse(promostart.substring(0, 2)));
               i++) {
             if (_events.containsKey(date.add(new Duration(days: i)))) {
-              _events[date.add(new Duration(days: i))].add(promoid);
+              _events[date.add(new Duration(days: i))].add(promotitle);
             } else {
-              _events[date.add(new Duration(days: i))] = [promoid];
+              _events[date.add(new Duration(days: i))] = [promotitle];
             }
           }
         } else {
@@ -115,16 +110,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               int.parse(promoend.substring(0, 2)));
           while (!startdate.isAfter(enddate)) {
             if (_events.containsKey(startdate)) {
-              _events[startdate].add(promoid);
+              _events[startdate].add(promotitle);
             } else {
-              _events[startdate] = [promoid];
+              _events[startdate] = [promotitle];
             }
             startdate = startdate.add(new Duration(days: 1));
           }
         }
       }
       setState(() {
-        anothereventlist = eventlist;
+        _selectedEvents = _events[_selectedDay] ?? [];
       });
     }
 
@@ -344,7 +339,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     Future<DocumentSnapshot> mappingfunc(event) async {
       DocumentSnapshot promo = await Firestore.instance
-          .collection('all_promotions')
+          .collection('web_promotion')
           .document(event)
           .get();
       return promo;
@@ -352,7 +347,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     Future<DocumentSnapshot> mappingfunc2(company) async {
       DocumentSnapshot comp = await Firestore.instance
-          .collection('all_companies')
+          .collection('web_companies')
           .document(company)
           .get();
       return comp;
@@ -367,7 +362,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           ),
           margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           child: ListTile(
-            title: Text(anothereventlist[event],
+            title: Text(event,
                 style: TextStyle(color: Colors.black)),
             onTap: () {
               mappingfunc(event).then((DocumentSnapshot promotion) {
