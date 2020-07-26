@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:promotionapp/main.dart';
+import 'package:promotionapp/home.dart';
 
 class Calendar extends StatelessWidget {
   String userid;

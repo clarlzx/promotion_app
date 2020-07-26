@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart'; //used to add time lag for checkbox button
-import 'main.dart';
+import 'home.dart';
 
 class FilterList extends StatefulWidget {
 

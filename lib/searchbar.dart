@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
-import 'package:promotionapp/main.dart';
+import 'package:promotionapp/home.dart';
 
 //acts similarly to app bar, with actions and leading, etc.
 class PromotionSearch extends SearchDelegate<Promotion> {

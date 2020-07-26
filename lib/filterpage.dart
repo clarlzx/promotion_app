@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'home.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 
