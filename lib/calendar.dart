@@ -66,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
     // First search for all promotions saved by user
     void search() async {
+      Map<DateTime, List> aneventmap = {};
       final DocumentSnapshot snapShot = await Firestore.instance
           .collection('all_users')
           .document(userid)
@@ -78,48 +79,49 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             .collection('web_promotion')
             .document(promotitle)
             .get();
-        promostart = ds.data['start_date'];
-        promoend = ds.data['end_date'];
-
-        // If promotion within one month
-        if (promostart.substring(3, 5) == promoend.substring(3, 5)) {
-          // Check if there are existing promos on the day
-          DateTime date = new DateTime(
-              int.parse(promostart.substring(6)),
-              int.parse(promostart.substring(3, 5)),
-              int.parse(promostart.substring(0, 2)));
-          for (int i = 0;
-              i <=
-                  (int.parse(promoend.substring(0, 2)) -
-                      int.parse(promostart.substring(0, 2)));
-              i++) {
-            if (_events.containsKey(date.add(new Duration(days: i)))) {
-              _events[date.add(new Duration(days: i))].add(promotitle);
-            } else {
-              _events[date.add(new Duration(days: i))] = [promotitle];
+        if (ds.exists && ds != null) {
+          promostart = ds.data['start_date'];
+          promoend = ds.data['end_date'];
+          // If promotion within one month
+          if (promostart.substring(3, 5) == promoend.substring(3, 5)) {
+            // Check if there are existing promos on the day
+            DateTime date = new DateTime(
+                int.parse(promostart.substring(6)),
+                int.parse(promostart.substring(3, 5)),
+                int.parse(promostart.substring(0, 2)));
+            for (int i = 0;
+            i <=
+                (int.parse(promoend.substring(0, 2)) -
+                    int.parse(promostart.substring(0, 2)));
+            i++) {
+              if (aneventmap.containsKey(date.add(new Duration(days: i)))) {
+                aneventmap[date.add(new Duration(days: i))].add(promotitle);
+              } else {
+                aneventmap[date.add(new Duration(days: i))] = [promotitle];
+              }
             }
-          }
-        } else {
-          DateTime startdate = new DateTime(
-              int.parse(promostart.substring(6)),
-              int.parse(promostart.substring(3, 5)),
-              int.parse(promostart.substring(0, 2)));
-          DateTime enddate = new DateTime(
-              int.parse(promoend.substring(6)),
-              int.parse(promoend.substring(3, 5)),
-              int.parse(promoend.substring(0, 2)));
-          while (!startdate.isAfter(enddate)) {
-            if (_events.containsKey(startdate)) {
-              _events[startdate].add(promotitle);
-            } else {
-              _events[startdate] = [promotitle];
+          } else {
+            DateTime startdate = new DateTime(
+                int.parse(promostart.substring(6)),
+                int.parse(promostart.substring(3, 5)),
+                int.parse(promostart.substring(0, 2)));
+            DateTime enddate = new DateTime(
+                int.parse(promoend.substring(6)),
+                int.parse(promoend.substring(3, 5)),
+                int.parse(promoend.substring(0, 2)));
+            while (!startdate.isAfter(enddate)) {
+              if (aneventmap.containsKey(startdate)) {
+                aneventmap[startdate].add(promotitle);
+              } else {
+                aneventmap[startdate] = [promotitle];
+              }
+              startdate = startdate.add(new Duration(days: 1));
             }
-            startdate = startdate.add(new Duration(days: 1));
           }
         }
       }
       setState(() {
-        _selectedEvents = _events[_selectedDay] ?? [];
+        _events = aneventmap;
       });
     }
 
@@ -165,6 +167,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 //      appBar: AppBar(
 //        title: Text(widget.title),
 //      ),
+      backgroundColor: Colors.lightGreen[100],
       body: Column(
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
@@ -188,11 +191,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 //      holidays: _holidays,
       startingDayOfWeek: StartingDayOfWeek.monday,
       calendarStyle: CalendarStyle(
-        selectedColor: Colors.deepOrange[400],
-        todayColor: Colors.deepOrange[200],
-        markersColor: Colors.brown[700],
+        selectedColor: Colors.white,
+        todayColor: Colors.grey[100],
+        markersColor: Colors.grey,
         outsideDaysVisible: false,
+        weekendStyle: TextStyle().copyWith(color: Colors.green[900]),
         weekdayStyle: TextStyle().copyWith(color: Colors.black),
+        selectedStyle: TextStyle().copyWith(color: Colors.black),
+        todayStyle: TextStyle().copyWith(color: Colors.green[900]),
       ),
       headerStyle: HeaderStyle(
         titleTextStyle:
@@ -200,9 +206,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         formatButtonTextStyle:
             TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
-          color: Colors.deepOrange[400],
+          color: Colors.green[900],
           borderRadius: BorderRadius.circular(16.0),
         ),
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekdayStyle: TextStyle().copyWith(color: Colors.black),
+        weekendStyle: TextStyle().copyWith(color: Colors.green[900]),
       ),
       onDaySelected: _onDaySelected,
       onVisibleDaysChanged: _onVisibleDaysChanged,
@@ -210,133 +220,132 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     );
   }
 
-  // More advanced TableCalendar configuration (using Builders & Styles)
-  Widget _buildTableCalendarWithBuilders() {
-    return TableCalendar(
-      locale: 'pl_PL',
-      calendarController: _calendarController,
-      events: _events,
-//      holidays: _holidays,
-      initialCalendarFormat: CalendarFormat.month,
-      formatAnimation: FormatAnimation.slide,
-      startingDayOfWeek: StartingDayOfWeek.sunday,
-      availableGestures: AvailableGestures.all,
-      availableCalendarFormats: const {
-        CalendarFormat.month: '',
-        CalendarFormat.week: '',
-      },
-      calendarStyle: CalendarStyle(
-        outsideDaysVisible: false,
-        weekendStyle: TextStyle().copyWith(color: Colors.blue[800]),
-        holidayStyle: TextStyle().copyWith(color: Colors.blue[800]),
-      ),
-      daysOfWeekStyle: DaysOfWeekStyle(
-        weekendStyle: TextStyle().copyWith(color: Colors.blue[600]),
-      ),
-      headerStyle: HeaderStyle(
-        centerHeaderTitle: true,
-        formatButtonVisible: false,
-      ),
-      builders: CalendarBuilders(
-        selectedDayBuilder: (context, date, _) {
-          return FadeTransition(
-            opacity: Tween(begin: 0.0, end: 1.0).animate(_animationController),
-            child: Container(
-              margin: const EdgeInsets.all(4.0),
-              padding: const EdgeInsets.only(top: 5.0, left: 6.0),
-              color: Colors.deepOrange[300],
-              width: 100,
-              height: 100,
-              child: Text(
-                '${date.day}',
-                style: TextStyle().copyWith(fontSize: 16.0),
-              ),
-            ),
-          );
-        },
-        todayDayBuilder: (context, date, _) {
-          return Container(
-            margin: const EdgeInsets.all(4.0),
-            padding: const EdgeInsets.only(top: 5.0, left: 6.0),
-            color: Colors.amber[400],
-            width: 100,
-            height: 100,
-            child: Text(
-              '${date.day}',
-              style: TextStyle().copyWith(fontSize: 16.0),
-            ),
-          );
-        },
-        markersBuilder: (context, date, events, holidays) {
-          final children = <Widget>[];
+//  // More advanced TableCalendar configuration (using Builders & Styles)
+//  Widget _buildTableCalendarWithBuilders() {
+//    return TableCalendar(
+//      locale: 'pl_PL',
+//      calendarController: _calendarController,
+//      events: _events,
+////      holidays: _holidays,
+//      initialCalendarFormat: CalendarFormat.month,
+//      formatAnimation: FormatAnimation.slide,
+//      startingDayOfWeek: StartingDayOfWeek.sunday,
+//      availableGestures: AvailableGestures.all,
+//      availableCalendarFormats: const {
+//        CalendarFormat.month: '',
+//        CalendarFormat.week: '',
+//      },
+//      calendarStyle: CalendarStyle(
+//        outsideDaysVisible: false,
+//        weekendStyle: TextStyle().copyWith(color: Colors.blue[800]),
+//        holidayStyle: TextStyle().copyWith(color: Colors.blue[800]),
+//      ),
+//      daysOfWeekStyle: DaysOfWeekStyle(
+//        weekendStyle: TextStyle().copyWith(color: Colors.blue[600]),
+//      ),
+//      headerStyle: HeaderStyle(
+//        centerHeaderTitle: true,
+//        formatButtonVisible: false,
+//      ),
+//      builders: CalendarBuilders(
+//        selectedDayBuilder: (context, date, _) {
+//          return FadeTransition(
+//            opacity: Tween(begin: 0.0, end: 1.0).animate(_animationController),
+//            child: Container(
+//              margin: const EdgeInsets.all(4.0),
+//              padding: const EdgeInsets.only(top: 5.0, left: 6.0),
+//              color: Colors.deepOrange[300],
+//              width: 100,
+//              height: 100,
+//              child: Text(
+//                '${date.day}',
+//                style: TextStyle().copyWith(fontSize: 16.0),
+//              ),
+//            ),
+//          );
+//        },
+//        todayDayBuilder: (context, date, _) {
+//          return Container(
+//            margin: const EdgeInsets.all(4.0),
+//            padding: const EdgeInsets.only(top: 5.0, left: 6.0),
+//            color: Colors.amber[400],
+//            width: 100,
+//            height: 100,
+//            child: Text(
+//              '${date.day}',
+//              style: TextStyle().copyWith(fontSize: 16.0),
+//            ),
+//          );
+//        },
+//        markersBuilder: (context, date, events, holidays) {
+//          final children = <Widget>[];
+//
+//          if (events.isNotEmpty) {
+//            children.add(
+//              Positioned(
+//                right: 1,
+//                bottom: 1,
+//                child: _buildEventsMarker(date, events),
+//              ),
+//            );
+//          }
+//
+//          if (holidays.isNotEmpty) {
+//            children.add(
+//              Positioned(
+//                right: -2,
+//                top: -2,
+//                child: _buildHolidaysMarker(),
+//              ),
+//            );
+//          }
+//
+//          return children;
+//        },
+//      ),
+//      onDaySelected: (date, events) {
+//        _onDaySelected(date, events);
+//        _animationController.forward(from: 0.0);
+//      },
+//      onVisibleDaysChanged: _onVisibleDaysChanged,
+//      onCalendarCreated: _onCalendarCreated,
+//    );
+//  }
 
-          if (events.isNotEmpty) {
-            children.add(
-              Positioned(
-                right: 1,
-                bottom: 1,
-                child: _buildEventsMarker(date, events),
-              ),
-            );
-          }
-
-          if (holidays.isNotEmpty) {
-            children.add(
-              Positioned(
-                right: -2,
-                top: -2,
-                child: _buildHolidaysMarker(),
-              ),
-            );
-          }
-
-          return children;
-        },
-      ),
-      onDaySelected: (date, events) {
-        _onDaySelected(date, events);
-        _animationController.forward(from: 0.0);
-      },
-      onVisibleDaysChanged: _onVisibleDaysChanged,
-      onCalendarCreated: _onCalendarCreated,
-    );
-  }
-
-  Widget _buildEventsMarker(DateTime date, List events) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        shape: BoxShape.rectangle,
-        color: _calendarController.isSelected(date)
-            ? Colors.brown[500]
-            : _calendarController.isToday(date)
-                ? Colors.brown[300]
-                : Colors.blue[400],
-      ),
-      width: 16.0,
-      height: 16.0,
-      child: Center(
-        child: Text(
-          '${events.length}',
-          style: TextStyle().copyWith(
-            color: Colors.white,
-            fontSize: 12.0,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHolidaysMarker() {
-    return Icon(
-      Icons.add_box,
-      size: 20.0,
-      color: Colors.blueGrey[800],
-    );
-  }
+//  Widget _buildEventsMarker(DateTime date, List events) {
+//    return AnimatedContainer(
+//      duration: const Duration(milliseconds: 300),
+//      decoration: BoxDecoration(
+//        shape: BoxShape.rectangle,
+//        color: _calendarController.isSelected(date)
+//            ? Colors.brown[500]
+//            : _calendarController.isToday(date)
+//                ? Colors.brown[300]
+//                : Colors.blue[400],
+//      ),
+//      width: 16.0,
+//      height: 16.0,
+//      child: Center(
+//        child: Text(
+//          '${events.length}',
+//          style: TextStyle().copyWith(
+//            color: Colors.white,
+//            fontSize: 12.0,
+//          ),
+//        ),
+//      ),
+//    );
+//  }
+//
+//  Widget _buildHolidaysMarker() {
+//    return Icon(
+//      Icons.add_box,
+//      size: 20.0,
+//      color: Colors.blueGrey[800],
+//    );
+//  }
 
   Widget _buildEventList() {
-
     Future<DocumentSnapshot> mappingfunc(event) async {
       DocumentSnapshot promo = await Firestore.instance
           .collection('web_promotion')
@@ -357,25 +366,29 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       children: _selectedEvents.map((event) {
         return Container(
           decoration: BoxDecoration(
-            border: Border.all(width: 0.8),
-            borderRadius: BorderRadius.circular(12.0),
+            //color: Colors.lightGreen[100],
+            //border: Border.all(width: 0.8),
+            //borderRadius: BorderRadius.circular(12.0),
           ),
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: ListTile(
+          //margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Card(child: ListTile(
             title: Text(event,
-                style: TextStyle(color: Colors.black)),
+                style: TextStyle(color: Colors.grey[900])),
             onTap: () {
               mappingfunc(event).then((DocumentSnapshot promotion) {
                 mappingfunc2(promotion.data['company'])
                     .then((DocumentSnapshot company) {
-
+                      List<String> location = [];
+                      if (company.data['location'] != null) {
+                        location = List<String>.from(company.data['location']);
+                      }
                       // ExtractPromoDetails.routeName
                   Navigator.pushNamed(context, '/promoDetails',
                       arguments: new Promotion(
                           event,
                           new Company(
                               company.data['title'],
-                              company.data['location'],
+                              location,
                               company.data['logoURL']),
                           promotion.data['start_date'],
                           promotion.data['end_date'],
@@ -390,7 +403,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               print('$event tapped!');
             },
           ),
-        );
+            color: Colors.white,
+        ),);
       }).toList(),
     );
   }

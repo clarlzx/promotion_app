@@ -112,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> startnotification(
       String promoid, String title, DateTime date) async {
-//    DateTime datetime = DateTime.now();
+//    DateTime datetime = DateTime.now().add(new Duration(seconds: 5));
     DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
@@ -145,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future onSelectNotification(String payLoad) async {
     //just want to get promotion for this
     Promotion selectedPromo;
-    widget.bloc.promotions.first.then((promotionList) {
+    await widget.bloc.promotions.first.then((promotionList) {
       selectedPromo = promotionList.firstWhere((promo) => promo.title == payLoad);
     });
     return Navigator.pushNamed(context, '/promoDetails',
@@ -176,7 +176,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future onDidReceiveLocalNotification(int id, String title, String body, String payLoad) async {
 
     Promotion selectedPromo;
-    widget.bloc.promotions.first.then((promotionLst) {
+    await widget.bloc.promotions.first.then((promotionLst) {
       selectedPromo = promotionLst.firstWhere((promo) => promo.title == payLoad);
     });
 
@@ -534,6 +534,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     Widget mainWidget = AppBar(
+      backgroundColor: Colors.black,
       title: customWidget,
       actions: <Widget>[
         IconButton(
@@ -550,6 +551,7 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> titles = <Widget>[
       mainWidget,
       AppBar(title: Text('Promotion Calendar'),
+        backgroundColor: Colors.black,
         leading: IconButton(
           icon: Icon(Icons.calendar_today),
           color: Colors.white,)
@@ -1242,6 +1244,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       } else {
         _MyHomePageState()
             ._showstartNotification(args.title, args.title, startdate);
+        _MyHomePageState()
+      ._showendNotification(args.title, args.title, enddate);
       }
     }
 
@@ -1288,6 +1292,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
 
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.black,
           actions: <Widget>[
             IconButton(
               //EDIT HERE FOR ADD
@@ -1367,7 +1372,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CommentPage(args.title)));
+                          builder: (context) => CommentPage(args.title, userid)));
                 });
               },
             ),
