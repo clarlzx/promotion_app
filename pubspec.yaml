@@ -39,6 +39,8 @@ dependencies:
   web_scraper: ^0.0.6
   timeago: ^2.0.26
   flutter_slidable: ^0.5.5
+  neat_periodic_task: ^1.0.1
+  google_fonts: ^1.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -47,6 +49,13 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  flutter_launcher_icons: ^0.7.5
+
+flutter_icons:
+  image_path : "assets/app_icon.jpg"
+  android: true
+  ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

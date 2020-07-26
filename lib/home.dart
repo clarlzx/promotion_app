@@ -20,6 +20,8 @@ import 'package:toast/toast.dart';
 import 'package:web_scraper/web_scraper.dart';
 import 'dart:io';
 import 'convertString.dart';
+import 'package:intl/intl.dart';
+import 'package:neat_periodic_task/neat_periodic_task.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -112,7 +114,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> startnotification(
       String promoid, String title, DateTime date) async {
+
 //    DateTime datetime = DateTime.now().add(new Duration(seconds: 5));
+//    DateTime datetime = DateTime.now();
+
     DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
@@ -143,7 +148,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future onSelectNotification(String payLoad) async {
-    //just want to get promotion for this
     Promotion selectedPromo;
     await widget.bloc.promotions.first.then((promotionList) {
       selectedPromo = promotionList.firstWhere((promo) => promo.title == payLoad);
@@ -151,26 +155,6 @@ class _MyHomePageState extends State<MyHomePage> {
     return Navigator.pushNamed(context, '/promoDetails',
       arguments: selectedPromo
     );
-//    final DocumentSnapshot ds = await Firestore.instance
-//        .collection('all_promotions')
-//        .document(payLoad)
-//        .get();
-//    final DocumentSnapshot ds1 = await Firestore.instance
-//        .collection('all_companies')
-//        .document(ds.data['company'])
-//        .get();
-//    if (payLoad != null) {
-//      print(payLoad);
-//    }
-//    await Navigator.pushNamed(context, '/promoDetails',
-//        arguments: new Promotion(
-//            ds.data['title'],
-//            new Company(ds1.data['company'], ds1.data['name'],
-//                ds1.data['locations'], ds1.data['logoURL']),
-//            ds.data['start_date'],
-//            ds.data['end_date'],
-//            ds.data['item_type'],
-//            payLoad));
   }
 
   Future onDidReceiveLocalNotification(int id, String title, String body, String payLoad) async {
@@ -196,318 +180,351 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ));
 
-//    final DocumentSnapshot ds = await Firestore.instance
-//        .collection('all_promotions')
-//        .document(payLoad)
-//        .get();
-//    final DocumentSnapshot ds1 = await Firestore.instance
-//        .collection('all_companies')
-//        .document(ds.data['company'])
-//        .get();
-//
-//    return showDialog(
-//        context: context,
-//        builder: (BuildContext context) => CupertinoAlertDialog(
-//              title: Text(title),
-//              content: Text(body),
-//              actions: [
-//                CupertinoDialogAction(
-//                    isDefaultAction: true,
-//                    onPressed: () {
-//                      Navigator.pushNamed(context, '/promoDetails',
-//                          arguments: new Promotion(
-//                              ds.data['title'],
-//                              new Company(ds1.data['company'], ds1.data['name'],
-//                                  ds1.data['locations'], ds1.data['logoURL']),
-//                              ds.data['start_date'],
-//                              ds.data['end_date'],
-//                              ds.data['item_type'],
-//                              payLoad));
-//                    },
-//                    child: Text("okay"))
-//              ],
-//            ));
+
   }
 
   WebScraper webScraper;
-  bool loaded = true; //change to false
-  String popNum;
 
   @override
   void initState() {
     super.initState();
-//    _getData();
     initializing();
+
+    final schedular = NeatPeriodicTaskScheduler(
+      interval: Duration(hours: 12),
+      name: 'get-data',
+      timeout: Duration(minutes: 30),
+      task: () async => _getData(),
+      minCycle: Duration(seconds: 5),
+    );
+
+    schedular.start();
   }
 
-//  _getData() async {
-//    List<String> all_href = []; //probably need to set as a global variable later
-//    //with widget.bloc = promotionBloc
-//
-//    webScraper = WebScraper('https://singpromos.com');
-//
-//    Future<bool> get_href(String path) async{
-//      int page_num = 1;
-//      while (await webScraper.loadWebPage (path + '$page_num')) {
-//        List<Map<String, dynamic>> results = webScraper.getElement('div.tabs1Content > '
-//        'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ', ['href']);
-//        List<Map<String, dynamic>> next_page = webScraper.getElement('div.tabs1Content > '
-//        'div.mh-loop-pagination.clearfix > a.next.page-numbers', ['title']);
-//
-//        for (Map<String, dynamic> map in results) {
-//          String str = map['attributes']['href'].split('https://singpromos.com')[1];
-//          //filter out news
-//          if (!str.startsWith('/news')) {
-//          all_href.add(str);
+
+  //web_scrapping
+  _getData() async {
+
+    print('started webscraping');
+
+    List<String> all_href = [];
+
+    Map<String, List> typeMap = await getTypeMap();
+    Map<String, List<String>> relatedWordsMap = await getRelatedWordsMap();
+
+    webScraper = WebScraper('https://singpromos.com');
+
+    Future<bool> get_href(String path) async{
+      int page_num = 1;
+      while (await webScraper.loadWebPage (path + '$page_num')) {
+        List<Map<String, dynamic>> results = webScraper.getElement('div.tabs1Content > '
+        'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ', ['href']);
+        List<Map<String, dynamic>> next_page = webScraper.getElement('div.tabs1Content > '
+        'div.mh-loop-pagination.clearfix > a.next.page-numbers', ['title']);
+
+        for (Map<String, dynamic> map in results) {
+          String str = map['attributes']['href'].split('https://singpromos.com')[1];
+          //filter out news
+          if (!str.startsWith('/news')) {
+          all_href.add(str);
+          }
+        }
+
+        if (next_page.isNotEmpty) {
+          page_num++;
+        } else {
+          break;
+        }
+      }
+      return true; //to show that it is done
+    }
+
+    await get_href("/bydate/ontoday/page/");
+    await get_href("/bydate/comingsoon/page/");
+
+    for (String href in all_href) {
+      await webScraper.loadWebPage(href);
+
+      String title = webScraper.getElement('h1.entry-title', ['title'])[0]['title'].toString().trim();
+      if (title.contains('/')) {
+        String temp = title.split('/')[0];
+        for (String str in title.split('/').sublist(1)) {
+          temp += " or " + str;
+        }
+        title = temp;
+      }
+
+      //list that contains start date, end date and company, note that some SGPROMO articles do not have this
+      List<Map<String, dynamic>> duration_company = webScraper.getElement('table.eventDetailsTable < tbody < tr < td', ['title']);
+
+      String start_date = '';
+      String end_date = '';
+      String company = '';
+
+      if (duration_company.isNotEmpty) {
+        List<String> duration_company_str_lst = duration_company[0]['title'].split('Location');
+        company = duration_company_str_lst[1].trim();
+        start_date = convert_date(duration_company_str_lst[0].split('(')[0].split('Starts')[1].trim());
+        if (duration_company_str_lst[0].contains('ONE day only')) {
+          end_date = start_date;
+        } else {
+          end_date = convert_date(duration_company_str_lst[0].split('Ends')[1].split('(')[0].trim());
+        }
+      } else {
+        //some SGPROMO articles do not date and location stated
+        //those that are empty are assumed to have a from date in the title (else just remove)
+        //following code removes things like foodpanda promocodes for the whole month though
+        //for now ignoring those with end_dates that are unknown
+//        if (title.contains('from')) {
+//          start_date = convert_date(title.split('from')[1].trim());
+//          end_date = 'UNKNOWN';
+//        } else if (title.contains('From')) {
+//          start_date = convert_date(title.split('From')[1].trim());
+//          if (start_date.contains(')')) {
+//            start_date = start_date.split(')')[0].trim();
 //          }
+//          end_date = 'UNKNOWN';
 //        }
-//
-//        if (next_page.isNotEmpty) {
-//          page_num++;
-//        } else {
-//          break;
-//        }
-//      }
-//      return true; //to show that it is done
-//    }
-//
-//    await get_href("/bydate/ontoday/page/");
-//    if (await get_href("/bydate/comingsoon/page/")) {
-////      setState(() {
-////        loaded = true;
-////      });
-//    }
-//
-//    for (String href in all_href) {
-//      await webScraper.loadWebPage(href);
-//
-//      String title = webScraper.getElement('h1.entry-title', ['title'])[0]['title'].toString().trim();
-//      if (title.contains('/')) {
-//        String temp = title.split('/')[0];
-//        for (String str in title.split('/').sublist(1)) {
-//          temp += " or " + str;
-//        }
-//        title = temp;
-//      }
-//
-//
-//      //list that contains start date, end date and company, note that some SGPROMO articles do not have this
-//      List<Map<String, dynamic>> duration_company = webScraper.getElement('table.eventDetailsTable < tbody < tr < td', ['title']);
-//
-//      String start_date = '';
-//      String end_date = '';
-//      String company = '';
-//
-//      if (duration_company.isNotEmpty) {
-//        List<String> duration_company_str_lst = duration_company[0]['title'].split('Location');
-//        company = duration_company_str_lst[1].trim();
-//        start_date = convert_date(duration_company_str_lst[0].split('(')[0].split('Starts')[1].trim());
-//        if (duration_company_str_lst[0].contains('ONE day only')) {
-//          end_date = start_date;
-//        } else {
-//          end_date = convert_date(duration_company_str_lst[0].split('Ends')[1].split('(')[0].trim());
-//        }
-//      } else {
-//        //some SGPROMO articles do not date and location stated
-//        //those that are empty are assumed to have a from date in the title (else just remove)
-//        //following code removes things like foodpanda promocodes for the whole month though
-//        //for now ignoring those with end_dates that are unknown
-////        if (title.contains('from')) {
-////          start_date = convert_date(title.split('from')[1].trim());
-////          end_date = 'UNKNOWN';
-////        } else if (title.contains('From')) {
-////          start_date = convert_date(title.split('From')[1].trim());
-////          if (start_date.contains(')')) {
-////            start_date = start_date.split(')')[0].trim();
-////          }
-////          end_date = 'UNKNOWN';
-////        }
-//      }
-//
-//      Map<String, List> typeMap = await getTypeMap();
-//      Map<String, List<String>> relatedWordsMap = await getRelatedWordsMap();
-//
-//      //all promotions are from ongoing n upcoming session, hence no need to
-//      //remove expired ones, just remove the ones that have unknown end_date
-//      //exists some promotions with empty company field, will ignore all of this first
-//      if (start_date != '' && !end_date.contains('UNKNOWN') && company != '') {
-//        //start adding into database to try first
-//
-//        //creating Company objects in collection
-//        await Firestore.instance.collection('web_companies')
-//            .document(company)
-//            .get()
-//            .then(
-//                (docSnapshot) {
-//              if (docSnapshot.exists) {
-//                //do nothing
-//              } else {
-//                Firestore.instance.collection("web_companies").document(
-//                  company).setData({
-//                  'title': company,
-//                  'logoURL': "https://firebasestorage.googleapis.com/v0/b/"
-//                      "promotion-918b7.appspot.com/o/defaultImg.png?alt=media"
-//                      "&token=4e673d46-7b92-4518-ad11-a532fcdfc491"
-//                });
-//              }
-//            }
-//        ).catchError((error) => print("Got error: $error"));
-//
-//
-//        //creating Promotion object in collection
-//        await Firestore.instance.collection('web_promotion')
-//            .document(title)
-//            .get()
-//            .then(
-//                (docSnapshot) {
-//              if (docSnapshot.exists) {
-//                //update happens here
-//                //happens when new tags are added
-//                List<String> types = List<String>.from(docSnapshot.data['types']);
-//                for (String key in relatedWordsMap.keys) {
-//                  for (String relatedWord in relatedWordsMap[key]) {
-//                    if (!(types.contains(relatedWord) && title.contains(relatedWord))) {
-//                      types.add(key);
-//                      for (String parentType in typeMap.keys) {
-//                        if (!(types.contains(parentType)) &&
-//                            typeMap[parentType].contains(key)) {
-//                          types.add(parentType);
-//                          break;
-//                        }
-//                      }
-//                      break;
-//                    }
-//                  }
-//                }
-//                Firestore.instance.collection("web_promotion").document(
-//                  title
-//                ).updateData({'types': types});
-//              } else {
-//                List<String> types = [];
-//                for (String key in relatedWordsMap.keys) {
-//                  for (String relatedWord in relatedWordsMap[key]) {
-//                    if (title.contains(relatedWord)) {
-//                      types.add(key);
-//                      for (String parentType in typeMap.keys) {
-//                        if (!(types.contains(parentType)) &&
-//                            typeMap[parentType].contains(key)) {
-//                          types.add(parentType);
-//                          break;
-//                        }
-//                      }
-//                      break;
-//                    }
-//                  }
-//                }
-//
-//                Firestore.instance.collection("web_promotion").document(
-//                  title
-//                ).setData({'title': title, 'company': company, 'types': types,
-//                  'clicks': 0, 'start_date': start_date, 'end_date': end_date,
-//                  'comments': [], 'dislikes': 0, 'likes' : 0
-//                });
-//              }
-//            }
-//        ).catchError((error) => print(" Got error: $error"));
-//
-//      }
-//    }
-//
-//    setState(() {
-//      loaded = true;
-//    });
-//
-//  }
-//
-//  Future<Map<String, List<String>>> getTypeMap() async {
-//    Map<String, List<String>> map = new Map<String, List<String>>();
-//    await Firestore.instance.collection('web_type')
-//      .getDocuments()
-//      .then(
-//        (collection) {
-//          collection.documents.forEach(
-//            (docSnapshot) {
-//              if (docSnapshot.data['child_id'] != null) {
-//                map[docSnapshot.data['title']] = List<String>.from(docSnapshot.data['child_id']);
-//              }
-//            }
-//          );
-//        }
-//    );
-//    return map;
-//  }
-//
-//  Future<Map<String, List<String>>> getRelatedWordsMap() async{
-//    Map<String, List<String>> map = new Map<String, List<String>>();
-//    await Firestore.instance.collection('web_type')
-//        .getDocuments()
-//        .then(
-//          (collection) {
-//            collection.documents.forEach(
-//              (docSnapshot) {
-//                if (docSnapshot.data['related_words'] != null) {
-//                  List<String> temp = [];
-//                  for (String str in docSnapshot.data['related_words']) {
-//                    temp.add(convertString.convertUpperCase(str));
-//                    temp.add(convertString.convertLowerCase(str));
-//                    temp.add(convertString.convertCapitalizeFirstWord(str));
-//                    if (str.split(" ").length > 1) {
-//                      temp.add(convertString.convertCapitalizeEachWord(str));
-//                    }
-//                    if (!(temp.contains(str))) {
-//                      temp.add(str);
-//                    }
-//                  }
-//                  map[docSnapshot.data['title']] = temp;
-//                }
-//              }
-//            );
-//          }
-//        ).catchError((error) => print("Got error: $error"));
-//    return map;
-//  }
-//
-//  String convert_date(String str) {
-//    //converting date_str : 11 July 2020 to 11/07/2020
-//    if (!str.contains("UNKNOWN")) {
-//      List<String> str_lst = str.split(' ');
-//      String result = str_lst[0] + "/" + convert_month(str_lst[1]) + "/" +
-//          str_lst[2];
-//      return result;
-//    }
-//    return str;
-//  }
-//
-//  String convert_month(String month_str) {
-//    //convert from July to 07
-//    if (month_str == "January" || month_str == "Jan") {
-//      return "01";
-//    } else if (month_str == "February" || month_str == "Feb") {
-//      return "02";
-//    } else if (month_str == "March" || month_str == "Mar") {
-//      return "03";
-//    } else if (month_str == "April" || month_str == "Apr") {
-//      return "04";
-//    } else if (month_str == "May") {
-//      return "05";
-//    } else if (month_str == "June" || month_str == "Jun") {
-//      return "06";
-//    } else if (month_str == "July" || month_str == "Jul") {
-//      return "07";
-//    } else if (month_str == "August" || month_str == "Aug") {
-//      return "08";
-//    } else if (month_str == "September" || month_str == "Sept" || month_str == "Sep") {
-//      return "09";
-//    } else if (month_str == "October" || month_str == "Oct") {
-//      return "10";
-//    } else if (month_str == "November" || month_str == "Nov") {
-//      return "11";
-//    } else if (month_str == "December" || month_str == "Dec") {
-//      return "12";
-//    } else {
-//      return ("Another kind of string was inputted");
-//    }
-//  }
+      }
+
+      //all promotions are from ongoing n upcoming session, hence no need to
+      //remove expired ones, just remove the ones that have unknown end_date
+      //exists some promotions with empty company field, will ignore all of this first
+      if (start_date != '' && !end_date.contains('UNKNOWN') && company != '') {
+        //start adding into database to try first
+
+        //creating Company objects in collection
+        await Firestore.instance.collection('web_companies')
+            .document(company)
+            .get()
+            .then(
+                (docSnapshot) {
+              if (docSnapshot.exists) {
+                //do nothing
+              } else {
+                Firestore.instance.collection("web_companies").document(
+                  company).setData({
+                  'title': company,
+                  'logoURL': "https://firebasestorage.googleapis.com/v0/b/"
+                      "promotion-918b7.appspot.com/o/defaultImg.png?alt=media"
+                      "&token=4e673d46-7b92-4518-ad11-a532fcdfc491"
+                });
+              }
+            }
+        ).catchError((error) => print("Got error: $error"));
+
+
+        //creating Promotion object in collection
+        await Firestore.instance.collection('web_promotion')
+            .document(title)
+            .get()
+            .then(
+                (docSnapshot) {
+              if (docSnapshot.exists) {
+                //do nothing
+              } else {
+                List<String> types = [];
+                for (String key in relatedWordsMap.keys) {
+                  for (String relatedWord in relatedWordsMap[key]) {
+                    if (title.contains(relatedWord)) {
+                      types.add(key);
+                      for (String parentType in typeMap.keys) {
+                        if (!(types.contains(parentType)) &&
+                            typeMap[parentType].contains(key)) {
+                          types.add(parentType);
+                          break;
+                        }
+                      }
+                      break;
+                    }
+                  }
+                }
+
+                final now = DateTime.now();
+                Firestore.instance.collection("web_promotion").document(
+                  title
+                ).setData({'title': title, 'company': company, 'types': types,
+                  'clicks': 0, 'start_date': start_date, 'end_date': end_date,
+                  'comments': [], 'dislikes': 0, 'likes' : 0, 'dateAdded' : Timestamp.fromDate(now)
+                });
+              }
+            }
+        ).catchError((error) => print(" Got error: $error"));
+
+      }
+    }
+
+    await _updateData(typeMap, relatedWordsMap);
+
+    print("end webscraping process");
+  }
+
+  _updateData(Map<String, List> typeMap, Map<String, List<String>> relatedWordsMap) async {
+
+    print('undergoing update of database');
+
+    await Firestore.instance.collection('web_promotion').getDocuments().
+    then((querySnapshot) {
+      final now = DateTime.now();
+      querySnapshot.documents.forEach((docSnapshot) async{
+
+        final end_date = DateFormat("d/M/y H:m").parse(docSnapshot.data['end_date'] + ' 23:59');
+        //if end_date has ended then remove this document
+        if (!(now.isBefore(end_date))) {
+          await Firestore.instance.collection('web_promotion')
+            .document(docSnapshot.data['title'])
+            .delete()
+            .then((x){
+              print(docSnapshot.data['title'] + " deleted successfully");
+          }).catchError((error) => print("Error: " + error));
+
+          FirebaseUser user = await _auth.currentUser();
+          //also remove this promotion title from liked, disliked, saved promotions and clickedBefore
+          await Firestore.instance.collection('all_users').document(user.uid).get()
+          .then((userData) {
+            List<String> clickedBefore = List<String>.from(userData.data['clickedBefore']);
+            List<String> disliked_promotions = List<String>.from(userData.data['disliked_promotions']);
+            List<String> liked_promotions = List<String>.from(userData.data['liked_promotions']);
+            List<String> saved_promotion = List<String>.from(userData.data['saved_promotion']);
+            clickedBefore.remove(docSnapshot.data['title']);
+            disliked_promotions.remove(docSnapshot.data['title']);
+            liked_promotions.remove(docSnapshot.data['title']);
+            saved_promotion.remove(docSnapshot.data['title']);
+            Firestore.instance.collection('all_users').document(user.uid).updateData(
+              {'clickedBefore' : clickedBefore,
+              'disliked_promotions' : disliked_promotions,
+              'liked_promotions' : liked_promotions,
+              'saved_promotion' : saved_promotion
+              }
+            );
+          });
+        } else {
+          //update tags
+          //happens when new tags are added
+          List<String> types = List<String>.from(docSnapshot.data['types']);
+          for (String key in relatedWordsMap.keys) {
+            for (String relatedWord in relatedWordsMap[key]) {
+              if (!(types.contains(key)) &&
+                  docSnapshot.data['title'].contains(relatedWord)) {
+                types.add(key);
+                for (String parentType in typeMap.keys) {
+                  if (!(types.contains(parentType)) &&
+                      typeMap[parentType].contains(key)) {
+                    types.add(parentType);
+                    break;
+                  }
+                }
+                break;
+              }
+            }
+          }
+          Firestore.instance.collection("web_promotion")
+            .document(docSnapshot.data['title']).updateData({'types': types});
+        }
+      });
+    });
+
+  }
+
+  Future<Map<String, List<String>>> getTypeMap() async {
+    Map<String, List<String>> map = new Map<String, List<String>>();
+    await Firestore.instance.collection('web_type')
+      .getDocuments()
+      .then(
+        (collection) {
+          collection.documents.forEach(
+            (docSnapshot) {
+              if (docSnapshot.data['child_id'] != null) {
+                map[docSnapshot.data['title']] = List<String>.from(docSnapshot.data['child_id']);
+              }
+            }
+          );
+        }
+    );
+    return map;
+  }
+
+  Future<Map<String, List<String>>> getRelatedWordsMap() async{
+    Map<String, List<String>> map = new Map<String, List<String>>();
+    await Firestore.instance.collection('web_type')
+        .getDocuments()
+        .then(
+          (collection) {
+            collection.documents.forEach(
+              (docSnapshot) {
+                if (docSnapshot.data['related_words'] != null) {
+                  List<String> temp = [];
+                  for (String str in docSnapshot.data['related_words']) {
+                    temp.add(convertString.convertUpperCase(str));
+                    temp.add(convertString.convertLowerCase(str));
+                    temp.add(convertString.convertCapitalizeFirstWord(str));
+                    if (str.split(" ").length > 1) {
+                      temp.add(convertString.convertCapitalizeEachWord(str));
+                    }
+                    if (!(temp.contains(str))) {
+                      temp.add(str);
+                    }
+                  }
+                  map[docSnapshot.data['title']] = temp;
+                }
+              }
+            );
+          }
+        ).catchError((error) => print("Got error: $error"));
+    return map;
+  }
+
+  String convert_date(String str) {
+    //converting date_str : 9 July 2020 to 09/07/2020
+    if (!str.contains("UNKNOWN")) {
+      List<String> str_lst = str.split(' ');
+      String result = convert_day(str_lst[0]) + "/" + convert_month(str_lst[1]) + "/" +
+          str_lst[2];
+      return result;
+    }
+    return str;
+  }
+
+  String convert_day(String day_str) {
+    if (day_str.length > 1) {
+      return day_str;
+    } else {
+      return "0" + day_str;
+    }
+  }
+
+  String convert_month(String month_str) {
+    //convert from July to 07
+    //convert 7 to 07
+    if (month_str == "January" || month_str == "Jan" || month_str == "1") {
+      return "01";
+    } else if (month_str == "February" || month_str == "Feb" || month_str == "2") {
+      return "02";
+    } else if (month_str == "March" || month_str == "Mar" || month_str == "3") {
+      return "03";
+    } else if (month_str == "April" || month_str == "Apr" || month_str == "4") {
+      return "04";
+    } else if (month_str == "May" || month_str == "5") {
+      return "05";
+    } else if (month_str == "June" || month_str == "Jun" || month_str == "6") {
+      return "06";
+    } else if (month_str == "July" || month_str == "Jul" || month_str == "7") {
+      return "07";
+    } else if (month_str == "August" || month_str == "Aug" || month_str == "8") {
+      return "08";
+    } else if (month_str == "September" || month_str == "Sept"
+        || month_str == "Sep" || month_str == "9") {
+      return "09";
+    } else if (month_str == "October" || month_str == "Oct") {
+      return "10";
+    } else if (month_str == "November" || month_str == "Nov") {
+      return "11";
+    } else if (month_str == "December" || month_str == "Dec") {
+      return "12";
+    } else {
+      return ("Another kind of string was inputted");
+    }
+  }
 
   int _selectedIndex = 0;
 
@@ -535,6 +552,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     Widget mainWidget = AppBar(
       backgroundColor: Colors.black,
+
       title: customWidget,
       actions: <Widget>[
         IconButton(
@@ -552,6 +570,7 @@ class _MyHomePageState extends State<MyHomePage> {
       mainWidget,
       AppBar(title: Text('Promotion Calendar'),
         backgroundColor: Colors.black,
+
         leading: IconButton(
           icon: Icon(Icons.calendar_today),
           color: Colors.white,)
@@ -562,11 +581,30 @@ class _MyHomePageState extends State<MyHomePage> {
       Calendar(widget.userid)
     ];
 
-    return Scaffold(
+    Future<bool> _onBackPressed() {
+      return showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Do you really want to exit the app?", style: TextStyle(color: Colors.black),),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("No", style: TextStyle(color: Colors.black)),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            FlatButton(
+              child: Text("Yes", style: TextStyle(color: Colors.black)),
+              onPressed: () => Navigator.pop(context, true),
+            )
+          ],
+        )
+      );
+    }
+    return WillPopScope(
+    onWillPop: _onBackPressed,
+    child: Scaffold(
       appBar: titles.elementAt(_selectedIndex),
       body: Center(
-        child: (loaded) ? options.elementAt(_selectedIndex)
-            : CircularProgressIndicator(),
+        child: options.elementAt(_selectedIndex)
       ),
       drawer: Drawer(
           child: ListView(
@@ -602,7 +640,8 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedItemColor: Colors.lightBlue,
         unselectedItemColor: Colors.grey[900],
       ),
-    );
+    ));
+
   }
 
   Widget _buildBody(BuildContext context) {
@@ -622,7 +661,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         Container(
           height: 200.0,
-          child: _buildSection(context),
+          child: _buildHotSection(context),
         ),
         Padding(
           padding: EdgeInsets.all(10.0),
@@ -877,6 +916,16 @@ class _MyHomePageState extends State<MyHomePage> {
         ));
   }
 
+  Widget _buildHotSection(BuildContext context) {
+    return StreamBuilder<UnmodifiableListView<Promotion>>(
+        stream: widget.bloc.Hotpromotions,
+        initialData: UnmodifiableListView<Promotion>([]),
+        builder: (context, snapshot) => ListView(
+          scrollDirection: Axis.horizontal,
+          children: snapshot.data.map(_buildListItem).toList(),
+        ));
+  }
+
   Widget _buildSection(BuildContext context) {
     return StreamBuilder<UnmodifiableListView<Promotion>>(
         stream: widget.bloc.promotions,
@@ -897,6 +946,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildListItem(Promotion promotion) {
     return GestureDetector(
       onTap: () {
+        promotion.increaseClicks();
         Navigator.pushNamed(
           context,
           '/promoDetails',
@@ -926,22 +976,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     fit: BoxFit.fill,
                   )),
                 ),
-//                  FutureBuilder(
-//                    future: promotion.company.getLogoUrl(),
-//                    initialData: "",
-//                    builder: (BuildContext context, AsyncSnapshot<String> text) {
-//                      return new Container(
-//                        height: 140.0,
-//                        width: 140.0,
-//                        decoration: new BoxDecoration(
-//                          image: DecorationImage(
-//                            image: NetworkImage(text.data),
-//                            fit: BoxFit.fill,
-//                          ),
-//                        ),
-//                      );
-//                    }
-//                  ),
                 Padding(
                   padding: EdgeInsets.all(3.0),
                 ),
@@ -1004,7 +1038,9 @@ class PromotionBloc {
     final promotionQShot =
         await Firestore.instance.collection('web_promotion').getDocuments();
     final NewpromotionQShot =
-      await Firestore.instance.collection('web_promotion').orderBy('start_date', descending: true).getDocuments();
+      await Firestore.instance.collection('web_promotion').orderBy('dateAdded', descending: false).getDocuments();
+    final HotpromotionQShot =
+      await Firestore.instance.collection('web_promotion').orderBy('clicks', descending: true).getDocuments();
     final companyQShot =
         await Firestore.instance.collection('web_companies').getDocuments();
     final typeQShot =
@@ -1067,11 +1103,25 @@ class PromotionBloc {
         doc.data['clicks']
     )).toList();
 
+    _Hotpromotions = HotpromotionQShot.documents
+        .map((doc) => Promotion(
+        doc.data['title'],
+        _companies[doc.data['company']],
+        doc.data['start_date'],
+        doc.data['end_date'],
+        doc.data['types'].map((type) => _types[type]).toList(),
+        List<String>.from(doc.data['comments']),
+        doc.data['dislikes'],
+        doc.data['likes'],
+        doc.data['clicks']
+    )).toList();
+
   }
 
 }
 
 class Promotion {
+
   final String title;
   final Company company;
   final String start_date;
@@ -1080,10 +1130,29 @@ class Promotion {
   final List<String> comments;
   final int dislikes;
   final int likes;
-  final int clicks;
+  int clicks;
 
   Promotion(this.title, this.company, this.start_date, this.end_date,
       this.types, this.comments, this.dislikes, this.likes, this.clicks);
+
+  void increaseClicks() async {
+    final FirebaseUser user = await _auth.currentUser();
+    await Firestore.instance.collection('all_users').document(user.uid).get()
+        .then((docSnapshot) {
+          List<String> clickedBefore = List<String>.from(docSnapshot.data["clickedBefore"]);
+          if (clickedBefore.contains(this.title)) {
+            //don't add
+          } else {
+            this.clicks++;
+            Firestore.instance.collection('web_promotion').document(this.title)
+                .updateData({"clicks" : this.clicks});
+            clickedBefore.add(this.title);
+            Firestore.instance.collection('all_users').document(user.uid)
+                .updateData({'clickedBefore': clickedBefore});
+          }
+    });
+  }
+
 }
 
 class Company {
@@ -1246,6 +1315,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
             ._showstartNotification(args.title, args.title, startdate);
         _MyHomePageState()
       ._showendNotification(args.title, args.title, enddate);
+
       }
     }
 
@@ -1293,6 +1363,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black,
+
           actions: <Widget>[
             IconButton(
               //EDIT HERE FOR ADD
@@ -1372,7 +1443,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CommentPage(args.title, userid)));
+                        builder: (context) => CommentPage(args.title, userid)));
                 });
               },
             ),

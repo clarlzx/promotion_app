@@ -10,22 +10,45 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   @override
+
+  Future<bool> _onBackPressed() {
+    return showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Do you really want to exit the app?", style: TextStyle(color: Colors.black),),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("No", style: TextStyle(color: Colors.black)),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            FlatButton(
+              child: Text("Yes", style: TextStyle(color: Colors.black)),
+              onPressed: () => Navigator.pop(context, true),
+            )
+          ],
+        )
+    );
+  }
+
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        color: Colors.white,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              FlutterLogo(size: 150), //will be where our official logo will be
-              SizedBox(height: 50),
-              _signInButton(),
-            ],
+    return WillPopScope(
+    onWillPop: _onBackPressed,
+      child: Scaffold(
+        body: Container(
+          color: Colors.white,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Image(image: AssetImage("assets/officialLogo.png"), height: 360.0), //will be where our official logo will be
+                SizedBox(height: 20),
+                _signInButton(),
+              ],
+            ),
           ),
         ),
-      ),
+      )
     );
   }
 
@@ -34,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
       splashColor: Colors.grey,
       onPressed: () {
         signInWithGoogle().then((String userid) {
-          Navigator.of(context).push(
+          Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) {
                 return MyApp(bloc: PromotionBloc(), userid: userid);
