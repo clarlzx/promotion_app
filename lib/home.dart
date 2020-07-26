@@ -114,7 +114,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> startnotification(
       String promoid, String title, DateTime date) async {
+
+//    DateTime datetime = DateTime.now().add(new Duration(seconds: 5));
 //    DateTime datetime = DateTime.now();
+
     DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
@@ -152,27 +155,6 @@ class _MyHomePageState extends State<MyHomePage> {
     return Navigator.pushNamed(context, '/promoDetails',
       arguments: selectedPromo
     );
-
-//    final DocumentSnapshot ds = await Firestore.instance
-//        .collection('all_promotions')
-//        .document(payLoad)
-//        .get();
-//    final DocumentSnapshot ds1 = await Firestore.instance
-//        .collection('all_companies')
-//        .document(ds.data['company'])
-//        .get();
-//    if (payLoad != null) {
-//      print(payLoad);
-//    }
-//    await Navigator.pushNamed(context, '/promoDetails',
-//        arguments: new Promotion(
-//            ds.data['title'],
-//            new Company(ds1.data['company'], ds1.data['name'],
-//                ds1.data['locations'], ds1.data['logoURL']),
-//            ds.data['start_date'],
-//            ds.data['end_date'],
-//            ds.data['item_type'],
-//            payLoad));
   }
 
   Future onDidReceiveLocalNotification(int id, String title, String body, String payLoad) async {
@@ -182,11 +164,6 @@ class _MyHomePageState extends State<MyHomePage> {
       selectedPromo = promotionLst.firstWhere((promo) => promo.title == payLoad);
     });
 
-    try {
-      print("here " + selectedPromo.title);
-    } catch (e) {
-      print ("error: " + e);
-    }
     return showDialog(
         context: context,
         builder: (BuildContext context) => CupertinoAlertDialog(
@@ -203,37 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ));
 
-//    final DocumentSnapshot ds = await Firestore.instance
-//        .collection('all_promotions')
-//        .document(payLoad)
-//        .get();
-//    final DocumentSnapshot ds1 = await Firestore.instance
-//        .collection('all_companies')
-//        .document(ds.data['company'])
-//        .get();
-//
-//    return showDialog(
-//        context: context,
-//        builder: (BuildContext context) => CupertinoAlertDialog(
-//              title: Text(title),
-//              content: Text(body),
-//              actions: [
-//                CupertinoDialogAction(
-//                    isDefaultAction: true,
-//                    onPressed: () {
-//                      Navigator.pushNamed(context, '/promoDetails',
-//                          arguments: new Promotion(
-//                              ds.data['title'],
-//                              new Company(ds1.data['company'], ds1.data['name'],
-//                                  ds1.data['locations'], ds1.data['logoURL']),
-//                              ds.data['start_date'],
-//                              ds.data['end_date'],
-//                              ds.data['item_type'],
-//                              payLoad));
-//                    },
-//                    child: Text("okay"))
-//              ],
-//            ));
+
   }
 
   WebScraper webScraper;
@@ -604,6 +551,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     Widget mainWidget = AppBar(
+      backgroundColor: Colors.black,
+
       title: customWidget,
       actions: <Widget>[
         IconButton(
@@ -620,6 +569,8 @@ class _MyHomePageState extends State<MyHomePage> {
     List<Widget> titles = <Widget>[
       mainWidget,
       AppBar(title: Text('Promotion Calendar'),
+        backgroundColor: Colors.black,
+
         leading: IconButton(
           icon: Icon(Icons.calendar_today),
           color: Colors.white,)
@@ -690,6 +641,7 @@ class _MyHomePageState extends State<MyHomePage> {
         unselectedItemColor: Colors.grey[900],
       ),
     ));
+
   }
 
   Widget _buildBody(BuildContext context) {
@@ -992,7 +944,6 @@ class _MyHomePageState extends State<MyHomePage> {
 //  }
 
   Widget _buildListItem(Promotion promotion) {
-
     return GestureDetector(
       onTap: () {
         promotion.increaseClicks();
@@ -1025,22 +976,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     fit: BoxFit.fill,
                   )),
                 ),
-//                  FutureBuilder(
-//                    future: promotion.company.getLogoUrl(),
-//                    initialData: "",
-//                    builder: (BuildContext context, AsyncSnapshot<String> text) {
-//                      return new Container(
-//                        height: 140.0,
-//                        width: 140.0,
-//                        decoration: new BoxDecoration(
-//                          image: DecorationImage(
-//                            image: NetworkImage(text.data),
-//                            fit: BoxFit.fill,
-//                          ),
-//                        ),
-//                      );
-//                    }
-//                  ),
                 Padding(
                   padding: EdgeInsets.all(3.0),
                 ),
@@ -1155,7 +1090,6 @@ class PromotionBloc {
         }
     ).toList();
 
-
     _Newpromotions = NewpromotionQShot.documents
         .map((doc) => Promotion(
         doc.data['title'],
@@ -1181,7 +1115,6 @@ class PromotionBloc {
         doc.data['likes'],
         doc.data['clicks']
     )).toList();
-
 
   }
 
@@ -1218,10 +1151,6 @@ class Promotion {
                 .updateData({'clickedBefore': clickedBefore});
           }
     });
-  }
-
-  int printClicks() {
-    print(this.clicks);
   }
 
 }
@@ -1384,6 +1313,9 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       } else {
         _MyHomePageState()
             ._showstartNotification(args.title, args.title, startdate);
+        _MyHomePageState()
+      ._showendNotification(args.title, args.title, enddate);
+
       }
     }
 
@@ -1430,6 +1362,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
 
     return Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.black,
+
           actions: <Widget>[
             IconButton(
               //EDIT HERE FOR ADD
@@ -1509,7 +1443,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CommentPage(args.title)));
+                        builder: (context) => CommentPage(args.title, userid)));
                 });
               },
             ),
