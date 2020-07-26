@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:promotionapp/main.dart';
+import 'package:promotionapp/home.dart';
 
 class Calendar extends StatelessWidget {
   String userid;
@@ -369,13 +369,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 mappingfunc2(promotion.data['company'])
                     .then((DocumentSnapshot company) {
 
+                  List<String> location = [];
+                  if (company.data['location'] != null) {
+                    location = List<String>.from(company.data['location']);
+                  }
                       // ExtractPromoDetails.routeName
                   Navigator.pushNamed(context, '/promoDetails',
                       arguments: new Promotion(
                           event,
                           new Company(
                               company.data['title'],
-                              company.data['location'],
+                              location,
                               company.data['logoURL']),
                           promotion.data['start_date'],
                           promotion.data['end_date'],

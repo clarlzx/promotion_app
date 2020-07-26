@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:promotionapp/main.dart';
+import 'package:promotionapp/home.dart';
 import 'package:profanity_filter/profanity_filter.dart';
 import 'package:toast/toast.dart';
 

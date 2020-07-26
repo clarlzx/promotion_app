@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
-import 'package:promotionapp/main.dart';
+import 'package:promotionapp/home.dart';
 
 //acts similarly to app bar, with actions and leading, etc.
 class PromotionSearch extends SearchDelegate<Promotion> {
@@ -89,19 +89,33 @@ class PromotionSearch extends SearchDelegate<Promotion> {
           );
         }
 
-        return ListView(
-          children: results.map<ListTile>((x) => ListTile(
-            title: Text(x.title,
-              style: TextStyle(color: Colors.black),
+        return GridView.count(
+          crossAxisCount: 2,
+          children: results.map<Card>((x) => Card(
+            child: InkWell(
+              splashColor: Colors.black,
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(x.company.logoURL),
+                    fit: BoxFit.fitWidth,
+                    alignment: Alignment.topCenter,
+                  ),
+                ),
+                child: Text(
+                  x.title,
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+              onTap: () {
+  //              close(context, x);
+  //              Navigator.pushNamed(
+  //                context,
+  //                '/promoDetails',
+  //                arguments: x,
+  //              );
+              },
             ),
-            onTap: () {
-              close(context, x);
-              Navigator.pushNamed(
-                context,
-                '/promoDetails',
-                arguments: x,
-              );
-            },
           )).toList()
         );
       },

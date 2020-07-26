@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
-import 'main.dart';
+import 'home.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -120,6 +120,7 @@ class ExtractFilterPromotion extends StatelessWidget {
                     );
                   }
                 } else if (snapshot.hasError) {
+                  print(snapshot.error);
                   return Center(
                     child: Icon(
                       Icons.error_outline,
@@ -179,7 +180,7 @@ class ExtractFilterPromotion extends StatelessWidget {
   }
 
   bool durationFilter(Promotion promo, Map<String, bool> checkedDurationMap) {
-    final now = DateTime.now().toUtc().add(Duration(hours: 8));
+    final now = DateTime.now();
     final start_date = DateFormat("d/M/y").parse(promo.start_date);
     final end_date = DateFormat("d/M/y H:m").parse(promo.end_date + ' 23:59');
 
