@@ -150,7 +150,6 @@ class _FilterLocationState extends State<FilterLocation> {
 
   @override
   Widget build(BuildContext context) {
-
     return CheckboxListTile(
       title: Text('Near Me',
         style: GoogleFonts.roboto(
