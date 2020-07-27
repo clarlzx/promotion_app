@@ -49,12 +49,13 @@ class Comment extends StatelessWidget {
   Widget commentwithdelete() {
     print(url);
     return Padding(
-      padding: EdgeInsets.only(bottom: 6.0),
+      padding: EdgeInsets.only(bottom: 2.0),
       child: Container(
-        color: Colors.white,
+        color: Colors.teal[100],
         child: Column(
           children: <Widget>[
             Card(
+              margin: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
               child: Slidable(
                 actionPane: SlidableDrawerActionPane(),
                 secondaryActions: <Widget>[
@@ -99,13 +100,15 @@ class Comment extends StatelessWidget {
 
   Widget commentwithoutdelete() {
     return Padding(
-      padding: EdgeInsets.only(bottom: 6.0),
+      padding: EdgeInsets.only(bottom: 2.0),
       child: Container(
         color: Colors.teal[100],
         child: Column(
           children: <Widget>[
             Card(
+              margin: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
               child: ListTile(
+                leading: CircleAvatar(radius: 30.0, backgroundImage: NetworkImage(url)),
                 title: RichText(
                   text: TextSpan(
                     children: <TextSpan>[
@@ -234,6 +237,7 @@ class CommentPageState extends State<CommentPage> {
       backgroundColor: Colors.teal[100],
       body: Column(
         children: <Widget>[
+          Padding(padding: EdgeInsets.all(3.0),),
           Expanded(child: displayComments()),
           Divider(),
           TextField(
