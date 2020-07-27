@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:promotionapp/home.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Calendar extends StatelessWidget {
   String userid;
@@ -208,7 +209,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         formatButtonTextStyle:
             TextStyle().copyWith(color: Colors.black, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
-          color: Colors.teal[200],
+          color: Colors.teal[100],
           borderRadius: BorderRadius.circular(16.0),
         ),
       ),
@@ -256,8 +257,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             child: ListTile(
               contentPadding: EdgeInsets.only(top: 6, bottom: 6, left: 10, right: 10),
             title: Center(
-        child: Text(event,
-                style: TextStyle(color: Colors.grey[900], fontSize: 15), textAlign: TextAlign.center,)),
+        child: Text(event, style: GoogleFonts.roboto(
+        textStyle: TextStyle(color: Colors.grey[900]), fontSize: 15, fontWeight: FontWeight.w300
+        ), textAlign: TextAlign.center,)),
+//                style: TextStyle(color: Colors.grey[900], fontSize: 15), textAlign: TextAlign.center,)),
             onTap: () {
               mappingfunc(event).then((DocumentSnapshot promotion) {
                 mappingfunc2(promotion.data['company'])
@@ -287,7 +290,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               print('$event tapped!');
             },
           ),
-            color: Colors.teal[200],
+            color: Colors.teal[100],
         ),);
       }).toList(),
     );
