@@ -93,8 +93,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> endnotification(
       String promoid, String title, DateTime date) async {
-//    DateTime datetime = DateTime.now();
-    DateTime datetime = date;
+    DateTime datetime = DateTime.now();
+//    DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
         AndroidNotificationDetails(
