@@ -22,6 +22,8 @@ import 'dart:io';
 import 'convertString.dart';
 import 'package:intl/intl.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'viewmore.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -38,7 +40,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         // Define the default brightness and colors.
         brightness: Brightness.dark,
-        primaryColor: Colors.blue,
+        primaryColor: Colors.black,
         scaffoldBackgroundColor: Colors.grey[50],
 
         // Define the default font family
@@ -51,6 +53,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/promoDetails': (context) => ExtractPromoDetails(userid),
         '/filterPage': (context) => ExtractFilterPromotion(),
+        '/viewMore': (context) => ViewMoreScreen(),
         MyHomePage.routeName: (BuildContext context) => new MyHomePage(bloc: bloc, userid: userid),
       },
     );
@@ -345,7 +348,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   title
                 ).setData({'title': title, 'company': company, 'types': types,
                   'clicks': 0, 'start_date': start_date, 'end_date': end_date,
-                  'comments': [], 'dislikes': 0, 'likes' : 0, 'dateAdded' : Timestamp.fromDate(now)
+                  'comments': [], 'dislikes': 0, 'likes' : 0, 'dateAdded' : Timestamp.fromDate(now),
+                  'href' : "https://singpromos.com" + href
                 });
               }
             }
@@ -554,16 +558,16 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundColor: Colors.black,
 
       title: customWidget,
-      actions: <Widget>[
-        IconButton(
-          onPressed: () {
-            showSearch(
-                context: context,
-                delegate: PromotionSearch(widget.bloc.promotions));
-          },
-          icon: customIcon,
-        )
-      ],
+//      actions: <Widget>[
+//        IconButton(
+//          onPressed: () {
+//            showSearch(
+//                context: context,
+//                delegate: PromotionSearch(widget.bloc.promotions));
+//          },
+//          icon: customIcon,
+//        )
+//      ],
     );
 
     List<Widget> titles = <Widget>[
@@ -613,8 +617,12 @@ class _MyHomePageState extends State<MyHomePage> {
               height: MediaQuery.of(context).size.height * 0.14,
               child: DrawerHeader(
                 child: Text(
-                  'Filter Promotions',
-                  style: TextStyle(fontSize: 20.0),
+                  'Filter\nPromotions',
+                    style: GoogleFonts.roboto(
+                      textStyle: TextStyle(color: Colors.white),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 26,
+                    )
                 ),
                 decoration: BoxDecoration(
                   color: Colors.grey[900],
@@ -646,53 +654,316 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildBody(BuildContext context) {
     // TODO: get actual snapshot from Cloud Firestore
-    return ListView(
-      padding: EdgeInsets.all(8.0),
-      children: <Widget>[
-        Padding(
-          padding: EdgeInsets.all(3.0),
-        ),
-        Container(
-          alignment: Alignment(-0.89, 0.0),
-          child: Text(
-            "Hot Deals",
-            style: TextStyle(color: Colors.black, fontSize: 20),
-          ),
-        ),
-        Container(
-          height: 200.0,
-          child: _buildHotSection(context),
-        ),
-        Padding(
-          padding: EdgeInsets.all(10.0),
-        ),
-        Container(
-          alignment: Alignment(-0.89, 0.0),
-          child: Text(
-            "New Deals",
-            style: TextStyle(color: Colors.black, fontSize: 20),
-          ),
-        ),
-        Container(
-          height: 200.0,
-          child: _buildNewSection(context),
-        ),
-        Padding(
-          padding: EdgeInsets.all(10.0),
-        ),
-        Container(
-          alignment: Alignment(-0.89, 0.0),
-          child: Text(
-            "All Deals",
-            style: TextStyle(color: Colors.black, fontSize: 20),
-          ),
-        ),
-        Container(
-          height: 200.0,
-          child: _buildSection(context),
+
+    return Container(
+      height: double.infinity,
+      width: double.infinity,
+      color: Colors.teal[50],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.all(17.0),
+            ),
+            Align(
+              alignment: Alignment(-0.8, 0),
+              child: Text(
+                "Be a saver,",
+                textAlign: TextAlign.left,
+                style: GoogleFonts.roboto(
+                  textStyle: TextStyle(color: Colors.black),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 31,
+                )
+              )
+            ),
+            Align(
+              alignment: Alignment(-0.5, 0),
+              child: Text(
+                "never miss any deals!",
+                style: GoogleFonts.roboto(
+                  textStyle: TextStyle(color: Colors.black),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 31,
+                )
+              )
+            ),
+            GestureDetector(
+              child: Card(
+                margin: EdgeInsets.symmetric(vertical: 25.0, horizontal: 27.0),
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(70.0),
+                ),
+                child: ListTile(
+                  leading: Icon(Icons.search, color: Colors.grey[800], size: 45.0),
+                ),
+              ),
+              onTap: () {
+                showSearch(
+                    context: context,
+                    delegate: PromotionSearch(widget.bloc.promotions));
+              }
+            ),
+            Card(
+              color: Colors.teal[50],
+              elevation: 0,
+              child: ListTile(
+                leading: Image(
+                  image: AssetImage("assets/fire.png"),
+                  height: 40,
+                ),
+                title: Text(
+                  "Hot Deals",
+                  style: GoogleFonts.roboto(
+                    textStyle: TextStyle(color: Colors.black),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 29,
+                  ),
+                ),
+              )
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15.0),
+                color: Colors.teal[100],
+              ),
+              height: 275.0,
+              width: 380.0,
+              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
+              child: Stack(
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      height: 240,
+                      width: 355,
+                      child: _buildHotSection(context),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment(0.9,0.98),
+                    child: Container(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/viewMore',
+                            arguments: ViewMore(widget.bloc.Hotpromotions, "Hot"),
+                          );
+                        },
+                        child: RichText(
+                          text: TextSpan(
+                            text: "View More ",
+                            style: GoogleFonts.roboto(
+                              textStyle: TextStyle(color: Colors.grey[700]),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 21.0,
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
+                            ]
+                          )
+                        )
+                      ),
+                    ),
+                  ),
+                ]
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+            Card(
+                color: Colors.teal[50],
+                elevation: 0,
+                child: ListTile(
+                  leading: Image(
+                    image: AssetImage("assets/sparkles.png"),
+                    height: 40,
+                  ),
+                  title: Text(
+                    "New Deals",
+                    style: GoogleFonts.roboto(
+                      textStyle: TextStyle(color: Colors.black),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 29,
+                    ),
+                  ),
+                )
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15.0),
+                color: Colors.teal[100],
+              ),
+              height: 275.0,
+              width: 380.0,
+              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
+              child: Stack(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        height: 240,
+                        width: 355,
+                        child: _buildNewSection(context),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment(0.9,0.98),
+                      child: Container(
+                        child: GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/viewMore',
+                                arguments: ViewMore(widget.bloc.Newpromotions, "New"),
+                              );
+                            },
+                            child: RichText(
+                                text: TextSpan(
+                                    text: "View More ",
+                                    style: GoogleFonts.roboto(
+                                      textStyle: TextStyle(color: Colors.grey[700]),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 21.0,
+                                    ),
+                                    children: <TextSpan>[
+                                      TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
+                                    ]
+                                )
+                            )
+                        ),
+                      ),
+                    ),
+                  ]
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+            Card(
+                color: Colors.teal[50],
+                elevation: 0,
+                child: ListTile(
+                  leading: Image(
+                    image: AssetImage("assets/bags.png"),
+                    height: 40,
+                  ),
+                  title: Text(
+                    "All Deals",
+                    style: GoogleFonts.roboto(
+                      textStyle: TextStyle(color: Colors.black),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 29,
+                    ),
+                  ),
+                )
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15.0),
+                color: Colors.teal[100],
+              ),
+              height: 275.0,
+              width: 380.0,
+              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
+              child: Stack(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        height: 240,
+                        width: 355,
+                        child: _buildSection(context),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment(0.9,0.98),
+                      child: Container(
+                        child: GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/viewMore',
+                                arguments: ViewMore(widget.bloc.promotions, ""),
+                              );
+                            },
+                            child: RichText(
+                                text: TextSpan(
+                                    text: "View More ",
+                                    style: GoogleFonts.roboto(
+                                      textStyle: TextStyle(color: Colors.grey[700]),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 21.0,
+                                    ),
+                                    children: <TextSpan>[
+                                      TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
+                                    ]
+                                )
+                            )
+                        ),
+                      ),
+                    ),
+                  ]
+              ),
+            ),
+            Container(
+              height: 20,
+            )
+          ],
         )
-      ],
+      )
     );
+//    return ListView(
+//      padding: EdgeInsets.all(8.0),
+//      children: <Widget>[
+//        Padding(
+//          padding: EdgeInsets.all(3.0),
+//        ),
+//        Container(
+//          alignment: Alignment(-0.89, 0.0),
+//          child: Text(
+//            "Hot Deals",
+//            style: TextStyle(color: Colors.black, fontSize: 20),
+//          ),
+//        ),
+//        Container(
+//          height: 200.0,
+//          child: _buildHotSection(context),
+//        ),
+//        Padding(
+//          padding: EdgeInsets.all(10.0),
+//        ),
+//        Container(
+//          alignment: Alignment(-0.89, 0.0),
+//          child: Text(
+//            "New Deals",
+//            style: TextStyle(color: Colors.black, fontSize: 20),
+//          ),
+//        ),
+//        Container(
+//          height: 200.0,
+//          child: _buildNewSection(context),
+//        ),
+//        Padding(
+//          padding: EdgeInsets.all(10.0),
+//        ),
+//        Container(
+//          alignment: Alignment(-0.89, 0.0),
+//          child: Text(
+//            "All Deals",
+//            style: TextStyle(color: Colors.black, fontSize: 20),
+//          ),
+//        ),
+//        Container(
+//          height: 200.0,
+//          child: _buildSection(context),
+//        )
+//      ],
+//    );
   }
 
   Widget _buildFilter(BuildContext context) {
@@ -719,8 +990,14 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Align(
                 alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
-                  'BY CATEGORY',
-                  style: TextStyle(fontSize: 16.0),
+                  'By Type',
+                  style: GoogleFonts.roboto(
+                    textStyle: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                    )
+                  ),
                 ),
               ),
             ),
@@ -734,8 +1011,14 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Align(
                 alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
-                  'BY COMPANY',
-                  style: TextStyle(fontSize: 16.0),
+                  'By Company',
+                  style: GoogleFonts.roboto(
+                      textStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      )
+                  ),
                 ),
               ),
             ),
@@ -749,8 +1032,14 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Align(
                 alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
-                  'BY DURATION',
-                  style: TextStyle(fontSize: 16.0),
+                  'By Duration',
+                  style: GoogleFonts.roboto(
+                      textStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      )
+                  ),
                 ),
               ),
             ),
@@ -761,8 +1050,14 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Align(
                 alignment: FractionalOffset(0.09,0.5),
                 child: Text(
-                  'BY LOCATION',
-                  style: TextStyle(fontSize: 16.0),
+                  'By Location',
+                  style: GoogleFonts.roboto(
+                      textStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      )
+                  ),
                 ),
               ),
             ),
@@ -772,7 +1067,6 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Colors.teal[200],
               onPressed: () {
 //                _getCurrentLocation(widget.bloc.promotions);
-
                 Navigator.pushNamed(
                   context,
                   '/filterPage',
@@ -782,12 +1076,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     checkedCompanyMap,
                     checkedDurationMap,
                     checkedLocationMap,
+                    widget.bloc.companyStream
                   ),
                 );
               },
               child: Text(
                 'Filter',
-                style: TextStyle(color: Colors.black),
+                style: GoogleFonts.roboto(
+                    textStyle: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    )
+                ),
               ),
             ),
             Padding(
@@ -844,7 +1145,13 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _buildCompanyFilter(
       BuildContext context, Map<String, bool> checkedCompanyMap) {
     return ExpansionTile(
-      title: Text('Companies'),
+      title: Text('Companies',
+          style: GoogleFonts.roboto(
+            textStyle: TextStyle(color: Colors.white),
+            fontWeight: FontWeight.w300,
+            fontSize: 17.5,
+          )
+      ),
       children: <Widget>[
         StreamBuilder<UnmodifiableListView<Company>>(
             stream: widget.bloc.companyStream,
@@ -879,7 +1186,13 @@ class _MyHomePageState extends State<MyHomePage> {
     checkedDurationMap['This Week'] = false;
 
     return ExpansionTile(
-      title: Text('Duration'),
+      title: Text('Duration',
+          style: GoogleFonts.roboto(
+            textStyle: TextStyle(color: Colors.white),
+            fontWeight: FontWeight.w300,
+            fontSize: 17.5,
+          )
+      ),
       children: checkedDurationMap.keys.map((keys) =>
           FilterDurationList(title: keys, checkedDurationMap: checkedDurationMap)).toList()
     );
@@ -899,7 +1212,13 @@ class _MyHomePageState extends State<MyHomePage> {
     checkedLocationMap['Near Me'] = false;
 
     return ExpansionTile(
-      title: Text('Location'),
+      title: Text('Location',
+          style: GoogleFonts.roboto(
+            textStyle: TextStyle(color: Colors.white),
+            fontWeight: FontWeight.w300,
+            fontSize: 17.5,
+          )
+      ),
       children: <Widget>[
         FilterLocation(checkedLocationMap: checkedLocationMap),
       ],
@@ -960,8 +1279,9 @@ class _MyHomePageState extends State<MyHomePage> {
           alignment: Alignment.topCenter,
           child: Container(
             decoration: BoxDecoration(
+              color: Colors.white,
               border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(5.0),
+              borderRadius: BorderRadius.circular(10.0),
             ),
             child: Container(
               width: 140.0,
@@ -971,9 +1291,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   height: 140.0,
                   width: 140.0,
                   decoration: new BoxDecoration(
-                      image: DecorationImage(
-                    image: NetworkImage(promotion.company.logoURL),
-                    fit: BoxFit.fill,
+                    borderRadius: new BorderRadius.only(
+                      topLeft: const Radius.circular(10.0),
+                      topRight: const Radius.circular(10.0),
+                    ),
+                    image: DecorationImage(
+                      image: NetworkImage(promotion.company.logoURL),
+                      fit: BoxFit.fill,
                   )),
                 ),
                 Padding(
