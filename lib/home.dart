@@ -26,7 +26,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'viewmore.dart';
 
-
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
 class MyApp extends StatelessWidget {
@@ -647,6 +646,18 @@ class _MyHomePageState extends State<MyHomePage> {
               ));
     }
 
+    var checkedLocationMap = new Map<String, bool>();
+    var checkedDurationMap = new Map<String, bool>();
+
+    _onDrawerClose(bool isDrawerOpen, BuildContext context) {
+      if (!isDrawerOpen) {
+        setState(() {
+          checkedLocationMap = {'Near Me' : false};
+          checkedDurationMap = {'Today' : false, 'This Week' : false};
+        });
+      }
+    }
+
     return WillPopScope(
     onWillPop: _onBackPressed,
     child: Scaffold(
@@ -672,9 +683,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   color: Colors.grey[900],
                 ),
               )),
-          _buildFilter(context),
+          _buildFilter(context, checkedLocationMap, checkedDurationMap),
         ],
-      )),
+        )
+      ),
+      drawerCallback: (bool open) => _onDrawerClose(open, context),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.grey[900],
         items: const <BottomNavigationBarItem>[
@@ -962,11 +975,9 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildFilter(BuildContext context) {
+  Widget _buildFilter(BuildContext context, Map<String, bool> checkedDurationMap, Map<String, bool> checkedLocationMap) {
     final Map<String, bool> checkedTypeMap = Map<String, bool>();
     final Map<String, bool> checkedCompanyMap = Map<String, bool>();
-    final Map<String, bool> checkedDurationMap = Map<String, bool>();
-    final Map<String, bool> checkedLocationMap = Map<String, bool>();
 
     return Container(
         height: MediaQuery.of(context).size.height * 0.86,
@@ -1062,7 +1073,7 @@ class _MyHomePageState extends State<MyHomePage> {
             RaisedButton(
               color: Colors.teal[200],
               onPressed: () {
-//                _getCurrentLocation(widget.bloc.promotions);
+//                _getCurrentLocation(widget.bloc.promotions)
                 Navigator.pushNamed(
                   context,
                   '/filterPage',
