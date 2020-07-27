@@ -61,7 +61,7 @@ class Comment extends StatelessWidget {
                   IconSlideAction(
                     caption: "Delete",
                     icon: Icons.delete,
-                    color: Colors.green[700],
+                    color: Colors.teal[300],
                     onTap: () {
                       deletecomment();
                     },
@@ -177,7 +177,7 @@ class CommentPageState extends State<CommentPage> {
           .snapshots(),
       builder: (context, dataSnapshot) {
         if (!dataSnapshot.hasData) {
-          return CircularProgressIndicator();
+          return Center(child: SizedBox(child: CircularProgressIndicator(), height: 50, width: 50,));
         }
         List<Comment> comments = [];
         dataSnapshot.data.documents.forEach((document) {
@@ -231,6 +231,7 @@ class CommentPageState extends State<CommentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: new AppBar(title: Text("Comments"), backgroundColor: Colors.black,),
+      backgroundColor: Colors.teal[100],
       body: Column(
         children: <Widget>[
           Expanded(child: displayComments()),
@@ -251,7 +252,7 @@ class CommentPageState extends State<CommentPage> {
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.all(20.0),
                 hintText: "Add comment here",
-                hintStyle: TextStyle(color: Colors.grey),
+                hintStyle: TextStyle(color: Colors.black),
               ))
         ],
       ),

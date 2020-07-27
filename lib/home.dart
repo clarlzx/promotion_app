@@ -22,8 +22,10 @@ import 'dart:io';
 import 'convertString.dart';
 import 'package:intl/intl.dart';
 import 'package:neat_periodic_task/neat_periodic_task.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'viewmore.dart';
+
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -75,7 +77,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   AndroidInitializationSettings androidInitializationSettings;
@@ -87,8 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await startnotification(promoid, title, date);
   }
 
-  void _showendNotification(
-      String promoid, String title, DateTime date) async {
+  void _showendNotification(String promoid, String title, DateTime date) async {
     await endnotification(promoid, title, date);
   }
 
@@ -98,14 +98,14 @@ class _MyHomePageState extends State<MyHomePage> {
     DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
-    AndroidNotificationDetails(
-        'Channel_ID', 'Channel_title', 'Channel_body',
-        priority: Priority.High,
-        importance: Importance.Max,
-        ticker: 'ticker');
+        AndroidNotificationDetails(
+            'Channel_ID', 'Channel_title', 'Channel_body',
+            priority: Priority.High,
+            importance: Importance.Max,
+            ticker: 'ticker');
     IOSNotificationDetails iosNotificationDetails = IOSNotificationDetails();
     NotificationDetails notificationDetails =
-    NotificationDetails(androidNotificationDetails, iosNotificationDetails);
+        NotificationDetails(androidNotificationDetails, iosNotificationDetails);
     await flutterLocalNotificationsPlugin.schedule(
         promoid.hashCode,
         "Last day for this awesome promotion!",
@@ -117,7 +117,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> startnotification(
       String promoid, String title, DateTime date) async {
-
 //    DateTime datetime = DateTime.now().add(new Duration(seconds: 5));
 //    DateTime datetime = DateTime.now();
 
@@ -153,37 +152,36 @@ class _MyHomePageState extends State<MyHomePage> {
   Future onSelectNotification(String payLoad) async {
     Promotion selectedPromo;
     await widget.bloc.promotions.first.then((promotionList) {
-      selectedPromo = promotionList.firstWhere((promo) => promo.title == payLoad);
+      selectedPromo =
+          promotionList.firstWhere((promo) => promo.title == payLoad);
     });
     return Navigator.pushNamed(context, '/promoDetails',
-      arguments: selectedPromo
-    );
+        arguments: selectedPromo);
   }
 
-  Future onDidReceiveLocalNotification(int id, String title, String body, String payLoad) async {
-
+  Future onDidReceiveLocalNotification(
+      int id, String title, String body, String payLoad) async {
     Promotion selectedPromo;
     await widget.bloc.promotions.first.then((promotionLst) {
-      selectedPromo = promotionLst.firstWhere((promo) => promo.title == payLoad);
+      selectedPromo =
+          promotionLst.firstWhere((promo) => promo.title == payLoad);
     });
 
     return showDialog(
         context: context,
         builder: (BuildContext context) => CupertinoAlertDialog(
-          title: Text(title),
-          content: Text(body),
-          actions: [
-            CupertinoDialogAction(
-                isDefaultAction: true,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/promoDetails',
-                      arguments: selectedPromo);
-                },
-                child: Text("okay"))
-          ],
-        ));
-
-
+              title: Text(title),
+              content: Text(body),
+              actions: [
+                CupertinoDialogAction(
+                    isDefaultAction: true,
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/promoDetails',
+                          arguments: selectedPromo);
+                    },
+                    child: Text("okay"))
+              ],
+            ));
   }
 
   WebScraper webScraper;
@@ -204,10 +202,8 @@ class _MyHomePageState extends State<MyHomePage> {
     schedular.start();
   }
 
-
   //web_scrapping
   _getData() async {
-
     print('started webscraping');
 
     List<String> all_href = [];
@@ -217,19 +213,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
     webScraper = WebScraper('https://singpromos.com');
 
-    Future<bool> get_href(String path) async{
+    Future<bool> get_href(String path) async {
       int page_num = 1;
-      while (await webScraper.loadWebPage (path + '$page_num')) {
-        List<Map<String, dynamic>> results = webScraper.getElement('div.tabs1Content > '
-        'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ', ['href']);
-        List<Map<String, dynamic>> next_page = webScraper.getElement('div.tabs1Content > '
-        'div.mh-loop-pagination.clearfix > a.next.page-numbers', ['title']);
+      while (await webScraper.loadWebPage(path + '$page_num')) {
+        List<Map<String, dynamic>> results = webScraper.getElement(
+            'div.tabs1Content > '
+            'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ',
+            ['href']);
+        List<Map<String, dynamic>> next_page = webScraper.getElement(
+            'div.tabs1Content > '
+            'div.mh-loop-pagination.clearfix > a.next.page-numbers',
+            ['title']);
 
         for (Map<String, dynamic> map in results) {
-          String str = map['attributes']['href'].split('https://singpromos.com')[1];
+          String str =
+              map['attributes']['href'].split('https://singpromos.com')[1];
           //filter out news
           if (!str.startsWith('/news')) {
-          all_href.add(str);
+            all_href.add(str);
           }
         }
 
@@ -248,7 +249,10 @@ class _MyHomePageState extends State<MyHomePage> {
     for (String href in all_href) {
       await webScraper.loadWebPage(href);
 
-      String title = webScraper.getElement('h1.entry-title', ['title'])[0]['title'].toString().trim();
+      String title = webScraper
+          .getElement('h1.entry-title', ['title'])[0]['title']
+          .toString()
+          .trim();
       if (title.contains('/')) {
         String temp = title.split('/')[0];
         for (String str in title.split('/').sublist(1)) {
@@ -258,20 +262,28 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       //list that contains start date, end date and company, note that some SGPROMO articles do not have this
-      List<Map<String, dynamic>> duration_company = webScraper.getElement('table.eventDetailsTable < tbody < tr < td', ['title']);
+      List<Map<String, dynamic>> duration_company = webScraper
+          .getElement('table.eventDetailsTable < tbody < tr < td', ['title']);
 
       String start_date = '';
       String end_date = '';
       String company = '';
 
       if (duration_company.isNotEmpty) {
-        List<String> duration_company_str_lst = duration_company[0]['title'].split('Location');
+        List<String> duration_company_str_lst =
+            duration_company[0]['title'].split('Location');
         company = duration_company_str_lst[1].trim();
-        start_date = convert_date(duration_company_str_lst[0].split('(')[0].split('Starts')[1].trim());
+        start_date = convert_date(duration_company_str_lst[0]
+            .split('(')[0]
+            .split('Starts')[1]
+            .trim());
         if (duration_company_str_lst[0].contains('ONE day only')) {
           end_date = start_date;
         } else {
-          end_date = convert_date(duration_company_str_lst[0].split('Ends')[1].split('(')[0].trim());
+          end_date = convert_date(duration_company_str_lst[0]
+              .split('Ends')[1]
+              .split('(')[0]
+              .trim());
         }
       } else {
         //some SGPROMO articles do not date and location stated
@@ -297,52 +309,49 @@ class _MyHomePageState extends State<MyHomePage> {
         //start adding into database to try first
 
         //creating Company objects in collection
-        await Firestore.instance.collection('web_companies')
+        await Firestore.instance
+            .collection('web_companies')
             .document(company)
             .get()
-            .then(
-                (docSnapshot) {
-              if (docSnapshot.exists) {
-                //do nothing
-              } else {
-                Firestore.instance.collection("web_companies").document(
-                  company).setData({
-                  'title': company,
-                  'logoURL': "https://firebasestorage.googleapis.com/v0/b/"
-                      "promotion-918b7.appspot.com/o/defaultImg.png?alt=media"
-                      "&token=4e673d46-7b92-4518-ad11-a532fcdfc491"
-                });
-              }
-            }
-        ).catchError((error) => print("Got error: $error"));
-
+            .then((docSnapshot) {
+          if (docSnapshot.exists) {
+            //do nothing
+          } else {
+            Firestore.instance
+                .collection("web_companies")
+                .document(company)
+                .setData({
+              'title': company,
+              'logoURL': "https://firebasestorage.googleapis.com/v0/b/"
+                  "promotion-918b7.appspot.com/o/defaultImg.png?alt=media"
+                  "&token=4e673d46-7b92-4518-ad11-a532fcdfc491"
+            });
+          }
+        }).catchError((error) => print("Got error: $error"));
 
         //creating Promotion object in collection
-        await Firestore.instance.collection('web_promotion')
+        await Firestore.instance
+            .collection('web_promotion')
             .document(title)
             .get()
-            .then(
-                (docSnapshot) {
-              if (docSnapshot.exists) {
-                //do nothing
-              } else {
-                List<String> types = [];
-                for (String key in relatedWordsMap.keys) {
-                  for (String relatedWord in relatedWordsMap[key]) {
-                    if (title.contains(relatedWord)) {
-                      types.add(key);
-                      for (String parentType in typeMap.keys) {
-                        if (!(types.contains(parentType)) &&
-                            typeMap[parentType].contains(key)) {
-                          types.add(parentType);
-                          break;
-                        }
-                      }
+            .then((docSnapshot) {
+          if (docSnapshot.exists) {
+            //do nothing
+          } else {
+            List<String> types = [];
+            for (String key in relatedWordsMap.keys) {
+              for (String relatedWord in relatedWordsMap[key]) {
+                if (title.contains(relatedWord)) {
+                  types.add(key);
+                  for (String parentType in typeMap.keys) {
+                    if (!(types.contains(parentType)) &&
+                        typeMap[parentType].contains(key)) {
+                      types.add(parentType);
                       break;
                     }
                   }
+                  break;
                 }
-
                 final now = DateTime.now();
                 Firestore.instance.collection("web_promotion").document(
                   title
@@ -353,8 +362,25 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
               }
             }
-        ).catchError((error) => print(" Got error: $error"));
 
+            final now = DateTime.now();
+            Firestore.instance
+                .collection("web_promotion")
+                .document(title)
+                .setData({
+              'title': title,
+              'company': company,
+              'types': types,
+              'clicks': 0,
+              'start_date': start_date,
+              'end_date': end_date,
+              'comments': [],
+              'dislikes': 0,
+              'likes': 0,
+              'dateAdded': Timestamp.fromDate(now)
+            });
+          }
+        }).catchError((error) => print(" Got error: $error"));
       }
     }
 
@@ -363,44 +389,56 @@ class _MyHomePageState extends State<MyHomePage> {
     print("end webscraping process");
   }
 
-  _updateData(Map<String, List> typeMap, Map<String, List<String>> relatedWordsMap) async {
-
+  _updateData(Map<String, List> typeMap,
+      Map<String, List<String>> relatedWordsMap) async {
     print('undergoing update of database');
 
-    await Firestore.instance.collection('web_promotion').getDocuments().
-    then((querySnapshot) {
+    await Firestore.instance
+        .collection('web_promotion')
+        .getDocuments()
+        .then((querySnapshot) {
       final now = DateTime.now();
-      querySnapshot.documents.forEach((docSnapshot) async{
-
-        final end_date = DateFormat("d/M/y H:m").parse(docSnapshot.data['end_date'] + ' 23:59');
+      querySnapshot.documents.forEach((docSnapshot) async {
+        final end_date = DateFormat("d/M/y H:m")
+            .parse(docSnapshot.data['end_date'] + ' 23:59');
         //if end_date has ended then remove this document
         if (!(now.isBefore(end_date))) {
-          await Firestore.instance.collection('web_promotion')
-            .document(docSnapshot.data['title'])
-            .delete()
-            .then((x){
-              print(docSnapshot.data['title'] + " deleted successfully");
+          await Firestore.instance
+              .collection('web_promotion')
+              .document(docSnapshot.data['title'])
+              .delete()
+              .then((x) {
+            print(docSnapshot.data['title'] + " deleted successfully");
           }).catchError((error) => print("Error: " + error));
 
           FirebaseUser user = await _auth.currentUser();
           //also remove this promotion title from liked, disliked, saved promotions and clickedBefore
-          await Firestore.instance.collection('all_users').document(user.uid).get()
-          .then((userData) {
-            List<String> clickedBefore = List<String>.from(userData.data['clickedBefore']);
-            List<String> disliked_promotions = List<String>.from(userData.data['disliked_promotions']);
-            List<String> liked_promotions = List<String>.from(userData.data['liked_promotions']);
-            List<String> saved_promotion = List<String>.from(userData.data['saved_promotion']);
+          await Firestore.instance
+              .collection('all_users')
+              .document(user.uid)
+              .get()
+              .then((userData) {
+            List<String> clickedBefore =
+                List<String>.from(userData.data['clickedBefore']);
+            List<String> disliked_promotions =
+                List<String>.from(userData.data['disliked_promotions']);
+            List<String> liked_promotions =
+                List<String>.from(userData.data['liked_promotions']);
+            List<String> saved_promotion =
+                List<String>.from(userData.data['saved_promotion']);
             clickedBefore.remove(docSnapshot.data['title']);
             disliked_promotions.remove(docSnapshot.data['title']);
             liked_promotions.remove(docSnapshot.data['title']);
             saved_promotion.remove(docSnapshot.data['title']);
-            Firestore.instance.collection('all_users').document(user.uid).updateData(
-              {'clickedBefore' : clickedBefore,
-              'disliked_promotions' : disliked_promotions,
-              'liked_promotions' : liked_promotions,
-              'saved_promotion' : saved_promotion
-              }
-            );
+            Firestore.instance
+                .collection('all_users')
+                .document(user.uid)
+                .updateData({
+              'clickedBefore': clickedBefore,
+              'disliked_promotions': disliked_promotions,
+              'liked_promotions': liked_promotions,
+              'saved_promotion': saved_promotion
+            });
           });
         } else {
           //update tags
@@ -422,59 +460,55 @@ class _MyHomePageState extends State<MyHomePage> {
               }
             }
           }
-          Firestore.instance.collection("web_promotion")
-            .document(docSnapshot.data['title']).updateData({'types': types});
+          Firestore.instance
+              .collection("web_promotion")
+              .document(docSnapshot.data['title'])
+              .updateData({'types': types});
         }
       });
     });
-
   }
 
   Future<Map<String, List<String>>> getTypeMap() async {
     Map<String, List<String>> map = new Map<String, List<String>>();
-    await Firestore.instance.collection('web_type')
-      .getDocuments()
-      .then(
-        (collection) {
-          collection.documents.forEach(
-            (docSnapshot) {
-              if (docSnapshot.data['child_id'] != null) {
-                map[docSnapshot.data['title']] = List<String>.from(docSnapshot.data['child_id']);
-              }
-            }
-          );
+    await Firestore.instance
+        .collection('web_type')
+        .getDocuments()
+        .then((collection) {
+      collection.documents.forEach((docSnapshot) {
+        if (docSnapshot.data['child_id'] != null) {
+          map[docSnapshot.data['title']] =
+              List<String>.from(docSnapshot.data['child_id']);
         }
-    );
+      });
+    });
     return map;
   }
 
-  Future<Map<String, List<String>>> getRelatedWordsMap() async{
+  Future<Map<String, List<String>>> getRelatedWordsMap() async {
     Map<String, List<String>> map = new Map<String, List<String>>();
-    await Firestore.instance.collection('web_type')
+    await Firestore.instance
+        .collection('web_type')
         .getDocuments()
-        .then(
-          (collection) {
-            collection.documents.forEach(
-              (docSnapshot) {
-                if (docSnapshot.data['related_words'] != null) {
-                  List<String> temp = [];
-                  for (String str in docSnapshot.data['related_words']) {
-                    temp.add(convertString.convertUpperCase(str));
-                    temp.add(convertString.convertLowerCase(str));
-                    temp.add(convertString.convertCapitalizeFirstWord(str));
-                    if (str.split(" ").length > 1) {
-                      temp.add(convertString.convertCapitalizeEachWord(str));
-                    }
-                    if (!(temp.contains(str))) {
-                      temp.add(str);
-                    }
-                  }
-                  map[docSnapshot.data['title']] = temp;
-                }
-              }
-            );
+        .then((collection) {
+      collection.documents.forEach((docSnapshot) {
+        if (docSnapshot.data['related_words'] != null) {
+          List<String> temp = [];
+          for (String str in docSnapshot.data['related_words']) {
+            temp.add(convertString.convertUpperCase(str));
+            temp.add(convertString.convertLowerCase(str));
+            temp.add(convertString.convertCapitalizeFirstWord(str));
+            if (str.split(" ").length > 1) {
+              temp.add(convertString.convertCapitalizeEachWord(str));
+            }
+            if (!(temp.contains(str))) {
+              temp.add(str);
+            }
           }
-        ).catchError((error) => print("Got error: $error"));
+          map[docSnapshot.data['title']] = temp;
+        }
+      });
+    }).catchError((error) => print("Got error: $error"));
     return map;
   }
 
@@ -482,7 +516,10 @@ class _MyHomePageState extends State<MyHomePage> {
     //converting date_str : 9 July 2020 to 09/07/2020
     if (!str.contains("UNKNOWN")) {
       List<String> str_lst = str.split(' ');
-      String result = convert_day(str_lst[0]) + "/" + convert_month(str_lst[1]) + "/" +
+      String result = convert_day(str_lst[0]) +
+          "/" +
+          convert_month(str_lst[1]) +
+          "/" +
           str_lst[2];
       return result;
     }
@@ -502,7 +539,9 @@ class _MyHomePageState extends State<MyHomePage> {
     //convert 7 to 07
     if (month_str == "January" || month_str == "Jan" || month_str == "1") {
       return "01";
-    } else if (month_str == "February" || month_str == "Feb" || month_str == "2") {
+    } else if (month_str == "February" ||
+        month_str == "Feb" ||
+        month_str == "2") {
       return "02";
     } else if (month_str == "March" || month_str == "Mar" || month_str == "3") {
       return "03";
@@ -514,10 +553,14 @@ class _MyHomePageState extends State<MyHomePage> {
       return "06";
     } else if (month_str == "July" || month_str == "Jul" || month_str == "7") {
       return "07";
-    } else if (month_str == "August" || month_str == "Aug" || month_str == "8") {
+    } else if (month_str == "August" ||
+        month_str == "Aug" ||
+        month_str == "8") {
       return "08";
-    } else if (month_str == "September" || month_str == "Sept"
-        || month_str == "Sep" || month_str == "9") {
+    } else if (month_str == "September" ||
+        month_str == "Sept" ||
+        month_str == "Sep" ||
+        month_str == "9") {
       return "09";
     } else if (month_str == "October" || month_str == "Oct") {
       return "10";
@@ -541,7 +584,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Icon customIcon = Icon(Icons.search, color: Colors.white);
   Widget customWidget = Text('View Promotions');
 
-
   void initializing() async {
     androidInitializationSettings = AndroidInitializationSettings('app_icon');
     iosInitializationSettings = IOSInitializationSettings(
@@ -556,7 +598,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     Widget mainWidget = AppBar(
       backgroundColor: Colors.black,
-
       title: customWidget,
 //      actions: <Widget>[
 //        IconButton(
@@ -572,13 +613,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     List<Widget> titles = <Widget>[
       mainWidget,
-      AppBar(title: Text('Promotion Calendar'),
-        backgroundColor: Colors.black,
-
-        leading: IconButton(
-          icon: Icon(Icons.calendar_today),
-          color: Colors.white,)
-      )
+      AppBar(
+          title: Text('Promotion Calendar'),
+          backgroundColor: Colors.black,
+          leading: IconButton(
+            icon: Icon(Icons.calendar_today),
+            color: Colors.white,
+          ))
     ];
     List<Widget> options = <Widget>[
       _buildBody(context),
@@ -587,22 +628,25 @@ class _MyHomePageState extends State<MyHomePage> {
 
     Future<bool> _onBackPressed() {
       return showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Do you really want to exit the app?", style: TextStyle(color: Colors.black),),
-          actions: <Widget>[
-            FlatButton(
-              child: Text("No", style: TextStyle(color: Colors.black)),
-              onPressed: () => Navigator.pop(context, false),
-            ),
-            FlatButton(
-              child: Text("Yes", style: TextStyle(color: Colors.black)),
-              onPressed: () => Navigator.pop(context, true),
-            )
-          ],
-        )
-      );
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text(
+                  "Do you really want to exit the app?",
+                  style: TextStyle(color: Colors.black),
+                ),
+                actions: <Widget>[
+                  FlatButton(
+                    child: Text("No", style: TextStyle(color: Colors.black)),
+                    onPressed: () => Navigator.pop(context, false),
+                  ),
+                  FlatButton(
+                    child: Text("Yes", style: TextStyle(color: Colors.black)),
+                    onPressed: () => Navigator.pop(context, true),
+                  )
+                ],
+              ));
     }
+
     return WillPopScope(
     onWillPop: _onBackPressed,
     child: Scaffold(
@@ -638,18 +682,7 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: Icon(Icons.home),
             title: Text('Home'),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            title: Text('Calendar'),
-          )
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Colors.lightBlue,
-        unselectedItemColor: Colors.grey[900],
-      ),
-    ));
-
+        ));
   }
 
   Widget _buildBody(BuildContext context) {
@@ -917,53 +950,6 @@ class _MyHomePageState extends State<MyHomePage> {
         )
       )
     );
-//    return ListView(
-//      padding: EdgeInsets.all(8.0),
-//      children: <Widget>[
-//        Padding(
-//          padding: EdgeInsets.all(3.0),
-//        ),
-//        Container(
-//          alignment: Alignment(-0.89, 0.0),
-//          child: Text(
-//            "Hot Deals",
-//            style: TextStyle(color: Colors.black, fontSize: 20),
-//          ),
-//        ),
-//        Container(
-//          height: 200.0,
-//          child: _buildHotSection(context),
-//        ),
-//        Padding(
-//          padding: EdgeInsets.all(10.0),
-//        ),
-//        Container(
-//          alignment: Alignment(-0.89, 0.0),
-//          child: Text(
-//            "New Deals",
-//            style: TextStyle(color: Colors.black, fontSize: 20),
-//          ),
-//        ),
-//        Container(
-//          height: 200.0,
-//          child: _buildNewSection(context),
-//        ),
-//        Padding(
-//          padding: EdgeInsets.all(10.0),
-//        ),
-//        Container(
-//          alignment: Alignment(-0.89, 0.0),
-//          child: Text(
-//            "All Deals",
-//            style: TextStyle(color: Colors.black, fontSize: 20),
-//          ),
-//        ),
-//        Container(
-//          height: 200.0,
-//          child: _buildSection(context),
-//        )
-//      ],
-//    );
   }
 
   Widget _buildFilter(BuildContext context) {
@@ -1048,7 +1034,7 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Colors.grey[800],
               height: 50.0,
               child: Align(
-                alignment: FractionalOffset(0.09,0.5),
+                alignment: FractionalOffset(0.09, 0.5),
                 child: Text(
                   'By Location',
                   style: GoogleFonts.roboto(
@@ -1113,15 +1099,14 @@ class _MyHomePageState extends State<MyHomePage> {
             try {
               if (!type.child_id.isEmpty) {
                 typeMap[type] = type.child_id
-                    .map((child_id) =>
-                    snapshot.data
+                    .map((child_id) => snapshot.data
                         .toList()
                         .firstWhere((t) => t.title == child_id))
                     .toList();
               } else {
                 checkedTypeMap[type.title] = false;
               }
-            } catch (e){
+            } catch (e) {
               print(type.title);
               print(e);
             }
@@ -1198,17 +1183,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-//  String _locationMessage =  "";
-//  void _getCurrentLocation(Stream<UnmodifiableListView<Promotion>> promoStream) async{
-////    final position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-//    List<Placemark> placemark = await Geolocator().placemarkFromAddress('313 Orchard Rd, #01-25 25A, Singapore 238895');
-//    setState(() {
-//      _locationMessage = "${placemark[0].position.latitude}, ${placemark[0].position.longitude}";
-//    });
-//  }
-
-  Widget _buildLocationFilter (BuildContext context, Map<String, bool> checkedLocationMap) {
-
+  Widget _buildLocationFilter(
+      BuildContext context, Map<String, bool> checkedLocationMap) {
     checkedLocationMap['Near Me'] = false;
 
     return ExpansionTile(
@@ -1230,9 +1206,9 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: widget.bloc.Newpromotions,
         initialData: UnmodifiableListView<Promotion>([]),
         builder: (context, snapshot) => ListView(
-          scrollDirection: Axis.horizontal,
-          children: snapshot.data.map(_buildListItem).toList(),
-        ));
+              scrollDirection: Axis.horizontal,
+              children: snapshot.data.map(_buildListItem).toList(),
+            ));
   }
 
   Widget _buildHotSection(BuildContext context) {
@@ -1240,9 +1216,9 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: widget.bloc.Hotpromotions,
         initialData: UnmodifiableListView<Promotion>([]),
         builder: (context, snapshot) => ListView(
-          scrollDirection: Axis.horizontal,
-          children: snapshot.data.map(_buildListItem).toList(),
-        ));
+              scrollDirection: Axis.horizontal,
+              children: snapshot.data.map(_buildListItem).toList(),
+            ));
   }
 
   Widget _buildSection(BuildContext context) {
@@ -1254,13 +1230,6 @@ class _MyHomePageState extends State<MyHomePage> {
               children: snapshot.data.map(_buildListItem).toList(),
             ));
   }
-
-//  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-//    return ListView(
-//      scrollDirection: Axis.horizontal,
-//      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
-//    );
-//  }
 
   Widget _buildListItem(Promotion promotion) {
     return GestureDetector(
@@ -1335,15 +1304,25 @@ class PromotionBloc {
   var _typesStream = <Type>[];
   var _companyStream = <Company>[];
 
-  Stream<UnmodifiableListView<Promotion>> get promotions => _promotionsSubject.stream;
-  Stream<UnmodifiableListView<Promotion>> get Newpromotions => _NewpromotionsSubject.stream;
-  Stream<UnmodifiableListView<Promotion>> get Hotpromotions => _HotpromotionsSubject.stream;
+  Stream<UnmodifiableListView<Promotion>> get promotions =>
+      _promotionsSubject.stream;
+
+  Stream<UnmodifiableListView<Promotion>> get Newpromotions =>
+      _NewpromotionsSubject.stream;
+
+  Stream<UnmodifiableListView<Promotion>> get Hotpromotions =>
+      _HotpromotionsSubject.stream;
+
   Stream<UnmodifiableListView<Type>> get typesStream => _typesSubject.stream;
-  Stream<UnmodifiableListView<Company>> get companyStream => _companySubject.stream;
+
+  Stream<UnmodifiableListView<Company>> get companyStream =>
+      _companySubject.stream;
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
-  final _NewpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
-  final _HotpromotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
+  final _NewpromotionsSubject =
+      BehaviorSubject<UnmodifiableListView<Promotion>>();
+  final _HotpromotionsSubject =
+      BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _typesSubject = BehaviorSubject<UnmodifiableListView<Type>>();
   final _companySubject = BehaviorSubject<UnmodifiableListView<Company>>();
 
@@ -1358,13 +1337,16 @@ class PromotionBloc {
   }
 
   Future<Null> _updatePromotions() async {
-
     final promotionQShot =
         await Firestore.instance.collection('web_promotion').getDocuments();
-    final NewpromotionQShot =
-      await Firestore.instance.collection('web_promotion').orderBy('dateAdded', descending: false).getDocuments();
-    final HotpromotionQShot =
-      await Firestore.instance.collection('web_promotion').orderBy('clicks', descending: true).getDocuments();
+    final NewpromotionQShot = await Firestore.instance
+        .collection('web_promotion')
+        .orderBy('dateAdded', descending: false)
+        .getDocuments();
+    final HotpromotionQShot = await Firestore.instance
+        .collection('web_promotion')
+        .orderBy('clicks', descending: true)
+        .getDocuments();
     final companyQShot =
         await Firestore.instance.collection('web_companies').getDocuments();
     final typeQShot =
@@ -1375,8 +1357,8 @@ class PromotionBloc {
       if (doc.data['location'] != null) {
         location = List<String>.from(doc.data['location']);
       }
-      _companies[doc.data['title']] = Company(doc.data['title'],
-          location, doc.data['logoURL']);
+      _companies[doc.data['title']] =
+          Company(doc.data['title'], location, doc.data['logoURL']);
     });
 
     _companyStream = _companies.values.toList();
@@ -1395,13 +1377,12 @@ class PromotionBloc {
 
     _typesStream = _types.values.toList();
 
-    _promotions = promotionQShot.documents
-        .map((doc) {
-          List types = [];
-          if (doc.data['types'].isNotEmpty) {
-            types = doc.data['types'].map((type) => _types[type]).toList();
-          }
-          return Promotion(
+    _promotions = promotionQShot.documents.map((doc) {
+      List types = [];
+      if (doc.data['types'].isNotEmpty) {
+        types = doc.data['types'].map((type) => _types[type]).toList();
+      }
+      return Promotion(
           doc.data['title'],
           _companies[doc.data['company']],
           doc.data['start_date'],
@@ -1411,41 +1392,37 @@ class PromotionBloc {
           doc.data['dislikes'],
           doc.data['likes'],
           doc.data['clicks']);
-        }
-    ).toList();
+    }).toList();
 
     _Newpromotions = NewpromotionQShot.documents
         .map((doc) => Promotion(
-        doc.data['title'],
-        _companies[doc.data['company']],
-        doc.data['start_date'],
-        doc.data['end_date'],
-        doc.data['types'].map((type) => _types[type]).toList(),
-        List<String>.from(doc.data['comments']),
-        doc.data['dislikes'],
-        doc.data['likes'],
-        doc.data['clicks']
-    )).toList();
+            doc.data['title'],
+            _companies[doc.data['company']],
+            doc.data['start_date'],
+            doc.data['end_date'],
+            doc.data['types'].map((type) => _types[type]).toList(),
+            List<String>.from(doc.data['comments']),
+            doc.data['dislikes'],
+            doc.data['likes'],
+            doc.data['clicks']))
+        .toList();
 
     _Hotpromotions = HotpromotionQShot.documents
         .map((doc) => Promotion(
-        doc.data['title'],
-        _companies[doc.data['company']],
-        doc.data['start_date'],
-        doc.data['end_date'],
-        doc.data['types'].map((type) => _types[type]).toList(),
-        List<String>.from(doc.data['comments']),
-        doc.data['dislikes'],
-        doc.data['likes'],
-        doc.data['clicks']
-    )).toList();
-
+            doc.data['title'],
+            _companies[doc.data['company']],
+            doc.data['start_date'],
+            doc.data['end_date'],
+            doc.data['types'].map((type) => _types[type]).toList(),
+            List<String>.from(doc.data['comments']),
+            doc.data['dislikes'],
+            doc.data['likes'],
+            doc.data['clicks']))
+        .toList();
   }
-
 }
 
 class Promotion {
-
   final String title;
   final Company company;
   final String start_date;
@@ -1461,22 +1438,29 @@ class Promotion {
 
   void increaseClicks() async {
     final FirebaseUser user = await _auth.currentUser();
-    await Firestore.instance.collection('all_users').document(user.uid).get()
+    await Firestore.instance
+        .collection('all_users')
+        .document(user.uid)
+        .get()
         .then((docSnapshot) {
-          List<String> clickedBefore = List<String>.from(docSnapshot.data["clickedBefore"]);
-          if (clickedBefore.contains(this.title)) {
-            //don't add
-          } else {
-            this.clicks++;
-            Firestore.instance.collection('web_promotion').document(this.title)
-                .updateData({"clicks" : this.clicks});
-            clickedBefore.add(this.title);
-            Firestore.instance.collection('all_users').document(user.uid)
-                .updateData({'clickedBefore': clickedBefore});
-          }
+      List<String> clickedBefore =
+          List<String>.from(docSnapshot.data["clickedBefore"]);
+      if (clickedBefore.contains(this.title)) {
+        //don't add
+      } else {
+        this.clicks++;
+        Firestore.instance
+            .collection('web_promotion')
+            .document(this.title)
+            .updateData({"clicks": this.clicks});
+        clickedBefore.add(this.title);
+        Firestore.instance
+            .collection('all_users')
+            .document(user.uid)
+            .updateData({'clickedBefore': clickedBefore});
+      }
     });
   }
-
 }
 
 class Company {
@@ -1519,6 +1503,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
   int dislikes = 0;
   bool liked = false;
   bool disliked = false;
+  String url = "";
   static var args;
 
   @override
@@ -1538,12 +1523,14 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     int databasedislikes = 0;
     bool userliked = false;
     bool userdisliked = false;
+    String promourl = "";
     final snapShot = await Firestore.instance
         .collection('web_promotion')
         .document(args.title)
         .get();
     databaselikes = snapShot.data['likes'];
     databasedislikes = snapShot.data['dislikes'];
+    promourl = snapShot.data["href"];
     final snapShot2 =
         await Firestore.instance.collection('all_users').document(userid).get();
     if (snapShot2 == null || !snapShot2.exists) {
@@ -1566,6 +1553,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       dislikes = databasedislikes;
       liked = userliked;
       disliked = userdisliked;
+      url = promourl;
     });
   }
 
@@ -1578,18 +1566,11 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     final Promotion args = ModalRoute.of(context).settings.arguments;
 
     Future<void> share() async {
-      String locations = '';
-      for (String location in args.company.location) {
-        locations += location + '; ';
-      }
       await FlutterShare.share(
         title: args.title,
         text: "Don't miss out on this promotion: " +
             args.title +
-            ' from ' +
-            args.start_date +
-            ' to ' +
-            args.end_date,
+            ". For more information, visit " + url + ".",
 //          linkUrl: 'https://flutter.dev/',
 //          chooserTitle: 'Example Chooser Title'
       );
@@ -1638,8 +1619,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
         _MyHomePageState()
             ._showstartNotification(args.title, args.title, startdate);
         _MyHomePageState()
-      ._showendNotification(args.title, args.title, enddate);
-
+            ._showendNotification(args.title, args.title, enddate);
       }
     }
 
@@ -1684,187 +1664,286 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
           .updateData({'likes': likes});
     }
 
+    _launchURL() async {
+      if (await canLaunch(url)) {
+        await launch(url, forceSafariVC: false, forceWebView: false);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
+
+    Color likeiconcolour = Colors.black;
+    Color dislikeiconcolour = Colors.black;
+
+    if (liked) {
+      likeiconcolour = Colors.teal;
+    } else if (disliked) {
+      dislikeiconcolour = Colors.teal;
+    } else if (!liked) {
+      likeiconcolour = Colors.black;
+    } else if (!disliked) {
+      dislikeiconcolour = Colors.black;
+    }
+
+    List<Widget> displaylocations() {
+      List<Widget> locations = [];
+      if (args.company.location.isEmpty) {
+        locations.add(Padding(
+            padding: EdgeInsets.all(20),
+            child: Text(
+              "No location data available",
+              style: TextStyle(color: Colors.black),
+            )));
+      } else {
+        for (String location in args.company.location) {
+          locations.add(Padding(
+              padding: EdgeInsets.only(left: 20, right: 20, top: 10),
+              child: Center(
+                  child: Text(
+                "• " + location,
+                style: TextStyle(color: Colors.black),
+                textAlign: TextAlign.center,
+              ))));
+        }
+        locations.add(Padding(
+          padding: EdgeInsets.only(bottom: 20),
+        ));
+      }
+      return locations;
+    }
+
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black,
-
           actions: <Widget>[
             IconButton(
               //EDIT HERE FOR ADD
               icon: Icon(Icons.add, color: Colors.white),
               onPressed: () {
                 addpromo();
-                Toast.show("Promotion added to calendar", context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                Toast.show("Promotion added to calendar", context,
+                    duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
               },
             ),
             IconButton(
                 icon: Icon(Icons.delete, color: Colors.white),
                 onPressed: () {
                   deletepromo();
-                  Toast.show("Promotion deleted from calendar", context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                  Toast.show("Promotion deleted from calendar", context,
+                      duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
                   Navigator.pushNamed(context, MyHomePage.routeName);
-
                 }),
-            Column(children: <Widget>[
-              Expanded(
-                  child: IconButton(
-                      icon: Icon(Icons.thumb_up, color: Colors.white),
-                      onPressed: () {
-                        if (!liked && !disliked) {
-                          setState(() {
-                            likes++;
-                          });
-                          liked = true;
-                        } else if (liked) {
-                          setState(() {
-                            likes--;
-                          });
-                          liked = false;
-                        } else if (!liked && disliked) {
-                          setState(() {
-                            likes++;
-                            dislikes--;
-                          });
-                          liked = true;
-                          disliked = false;
-                        }
-                        updatepromo();
-                      })),
-              Text(likes.toString())
-            ]),
-            Column(children: <Widget>[
-              Expanded(
-                  child: IconButton(
-                icon: Icon(Icons.thumb_down, color: Colors.white),
-                onPressed: () {
-                  if (!disliked && !liked) {
-                    setState(() {
-                      dislikes++;
-                    });
-                    disliked = true;
-                  } else if (disliked) {
-                    setState(() {
-                      dislikes--;
-                    });
-                    disliked = false;
-                  } else if (!disliked && liked) {
-                    setState(() {
-                      dislikes++;
-                      likes--;
-                    });
-                    liked = false;
-                    disliked = true;
-                  }
-                  updatepromo();
-                },
-              )),
-              Text(dislikes.toString())
-            ]),
-            IconButton(
-              icon: Icon(Icons.chat_bubble_outline, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CommentPage(args.title, userid)));
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.share, color: Colors.white),
-              onPressed: share,
-            ),
           ],
         ),
-        body: SingleChildScrollView(
-            child: Align(
-                alignment: Alignment.center,
-                child: Container(
-                    width: 350,
-                    child: Column(
-                      children: <Widget>[
-                        Container(
-                            padding: EdgeInsets.all(10.0),
-                            child: Text(args.title,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ))),
-                        Card(
-                            elevation: 10.0,
-                            child: Container(
-                                width: 350,
-                                child: Image(
-                                  image: NetworkImage(args.company.logoURL),
-                                  fit: BoxFit.fitWidth,
-                                ))),
-                        Padding(
-                          padding: EdgeInsets.all(10.0),
+        body: SafeArea(
+            child: SingleChildScrollView(
+                child: Align(
+                    alignment: Alignment.center,
+//                child: Container(
+//                    width: 350,
+                    child: Column(mainAxisSize: MainAxisSize.min, children: <
+                        Widget>[
+                      Container(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text(args.title,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ))),
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        Align(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                      fontSize: 19.0, color: Colors.black),
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                        text: 'Company: ',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextSpan(text: args.company.title),
-                                  ],
-                                ),
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                      fontSize: 19.0, color: Colors.black),
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                        text: 'Dates: ',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    TextSpan(
-                                        text: args.start_date +
-                                            ' - ' +
-                                            args.end_date),
-                                  ],
-                                ),
-                              ),
-                              Text('Locations:',
-                                  style: TextStyle(
-                                      fontSize: 19.0,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold)),
-                              for (String location in args.company.location)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text("• ",
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 16.0)),
-                                    Expanded(
-                                      child: Text(location,
-                                          style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 16.0)),
-                                    )
-                                  ],
-                                ),
-                            ],
+                        color: Colors.white,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.network(
+                            args.company.logoURL,
+                            height: 330,
+                            width: 330,
                           ),
                         ),
-                        Padding(
-                          padding: EdgeInsets.all(20.0),
+                      ),
+                      Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+                        IconButton(
+                            icon: Icon(Icons.thumb_up, color: likeiconcolour),
+                            onPressed: () {
+                              if (!liked && !disliked) {
+                                setState(() {
+                                  likes++;
+                                });
+                                liked = true;
+                              } else if (liked) {
+                                setState(() {
+                                  likes--;
+                                });
+                                liked = false;
+                              } else if (!liked && disliked) {
+                                setState(() {
+                                  likes++;
+                                  dislikes--;
+                                });
+                                liked = true;
+                                disliked = false;
+                              }
+                              updatepromo();
+                            }),
+                        Text(
+                          likes.toString(),
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        SizedBox(height: 5, width: 10),
+                        IconButton(
+                          icon:
+                              Icon(Icons.thumb_down, color: dislikeiconcolour),
+                          onPressed: () {
+                            if (!disliked && !liked) {
+                              setState(() {
+                                dislikes++;
+                              });
+                              disliked = true;
+                            } else if (disliked) {
+                              setState(() {
+                                dislikes--;
+                              });
+                              disliked = false;
+                            } else if (!disliked && liked) {
+                              setState(() {
+                                dislikes++;
+                                likes--;
+                              });
+                              liked = false;
+                              disliked = true;
+                            }
+                            updatepromo();
+                          },
+                        ),
+                        Text(
+                          dislikes.toString(),
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        SizedBox(height: 5, width: 10),
+                        IconButton(
+                          icon: Icon(Icons.comment, color: Colors.black),
+                          onPressed: () {
+                            setState(() {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          CommentPage(args.title, userid)));
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.share, color: Colors.black),
+                          onPressed: share,
+                        ),
+                        SizedBox(height: 5, width: 5),
+                        IconButton(
+                          icon:
+                              Icon(Icons.open_in_browser, color: Colors.black),
+                          iconSize: 30,
+                          onPressed: () {
+                            _launchURL();
+                          },
                         )
-                      ],
-                    )))));
+                      ]),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Container(
+                            padding: EdgeInsets.all(5),
+                            height: 80,
+                            width: 175,
+                            child: Card(
+                              color: Colors.teal,
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 15, top: 8),
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: TextStyle(
+                                        fontSize: 19.0, color: Colors.black),
+                                    children: <TextSpan>[
+                                      TextSpan(
+                                          text: 'Start Date' + '\n',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      TextSpan(text: args.start_date),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.all(5),
+                            height: 80,
+                            width: 175,
+                            child: Card(
+                              color: Colors.teal,
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 15, top: 8),
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: TextStyle(
+                                        fontSize: 19.0, color: Colors.black),
+                                    children: <TextSpan>[
+                                      TextSpan(
+                                          text: 'End Date' + '\n',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      TextSpan(text: args.end_date),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: EdgeInsets.all(5),
+                        height: 80,
+                        width: 350,
+                        child: Card(
+                          color: Colors.teal,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 15, top: 8),
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                    fontSize: 19.0, color: Colors.black),
+                                children: <TextSpan>[
+                                  TextSpan(
+                                      text: 'Company' + '\n',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  TextSpan(text: args.company.title),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.only(
+                            left: 5, right: 5, top: 5, bottom: 30),
+                        width: 350,
+                        child: Card(
+                          color: Colors.teal,
+                          child: ExpansionTile(
+                            title: Text('Locations',
+                                style: TextStyle(
+                                    fontSize: 19.0,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold)),
+                            children: displaylocations(),
+                          ),
+                        ),
+                      ),
+                    ])))));
   }
 }

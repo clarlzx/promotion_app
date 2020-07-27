@@ -167,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 //      appBar: AppBar(
 //        title: Text(widget.title),
 //      ),
-      backgroundColor: Colors.lightGreen[100],
+      backgroundColor: Colors.grey[900],
       body: Column(
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
@@ -191,159 +191,36 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 //      holidays: _holidays,
       startingDayOfWeek: StartingDayOfWeek.monday,
       calendarStyle: CalendarStyle(
-        selectedColor: Colors.white,
-        todayColor: Colors.grey[100],
-        markersColor: Colors.grey,
+        selectedColor: Colors.teal,
+        todayColor: Colors.teal[300],
+        markersColor: Colors.white,
         outsideDaysVisible: false,
-        weekendStyle: TextStyle().copyWith(color: Colors.green[900]),
-        weekdayStyle: TextStyle().copyWith(color: Colors.black),
-        selectedStyle: TextStyle().copyWith(color: Colors.black),
-        todayStyle: TextStyle().copyWith(color: Colors.green[900]),
+        weekendStyle: TextStyle().copyWith(color: Colors.teal[200]),
+        weekdayStyle: TextStyle().copyWith(color: Colors.white),
+        selectedStyle: TextStyle().copyWith(color: Colors.white),
+        todayStyle: TextStyle().copyWith(color: Colors.white),
       ),
       headerStyle: HeaderStyle(
+        leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+        rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
         titleTextStyle:
-            TextStyle().copyWith(color: Colors.black, fontSize: 17.0),
+            TextStyle().copyWith(color: Colors.white, fontSize: 17.0),
         formatButtonTextStyle:
-            TextStyle().copyWith(color: Colors.white, fontSize: 15.0),
+            TextStyle().copyWith(color: Colors.black, fontSize: 15.0),
         formatButtonDecoration: BoxDecoration(
-          color: Colors.green[900],
+          color: Colors.teal[200],
           borderRadius: BorderRadius.circular(16.0),
         ),
       ),
       daysOfWeekStyle: DaysOfWeekStyle(
-        weekdayStyle: TextStyle().copyWith(color: Colors.black),
-        weekendStyle: TextStyle().copyWith(color: Colors.green[900]),
+        weekdayStyle: TextStyle().copyWith(color: Colors.white),
+        weekendStyle: TextStyle().copyWith(color: Colors.teal[200]),
       ),
       onDaySelected: _onDaySelected,
       onVisibleDaysChanged: _onVisibleDaysChanged,
       onCalendarCreated: _onCalendarCreated,
     );
   }
-
-//  // More advanced TableCalendar configuration (using Builders & Styles)
-//  Widget _buildTableCalendarWithBuilders() {
-//    return TableCalendar(
-//      locale: 'pl_PL',
-//      calendarController: _calendarController,
-//      events: _events,
-////      holidays: _holidays,
-//      initialCalendarFormat: CalendarFormat.month,
-//      formatAnimation: FormatAnimation.slide,
-//      startingDayOfWeek: StartingDayOfWeek.sunday,
-//      availableGestures: AvailableGestures.all,
-//      availableCalendarFormats: const {
-//        CalendarFormat.month: '',
-//        CalendarFormat.week: '',
-//      },
-//      calendarStyle: CalendarStyle(
-//        outsideDaysVisible: false,
-//        weekendStyle: TextStyle().copyWith(color: Colors.blue[800]),
-//        holidayStyle: TextStyle().copyWith(color: Colors.blue[800]),
-//      ),
-//      daysOfWeekStyle: DaysOfWeekStyle(
-//        weekendStyle: TextStyle().copyWith(color: Colors.blue[600]),
-//      ),
-//      headerStyle: HeaderStyle(
-//        centerHeaderTitle: true,
-//        formatButtonVisible: false,
-//      ),
-//      builders: CalendarBuilders(
-//        selectedDayBuilder: (context, date, _) {
-//          return FadeTransition(
-//            opacity: Tween(begin: 0.0, end: 1.0).animate(_animationController),
-//            child: Container(
-//              margin: const EdgeInsets.all(4.0),
-//              padding: const EdgeInsets.only(top: 5.0, left: 6.0),
-//              color: Colors.deepOrange[300],
-//              width: 100,
-//              height: 100,
-//              child: Text(
-//                '${date.day}',
-//                style: TextStyle().copyWith(fontSize: 16.0),
-//              ),
-//            ),
-//          );
-//        },
-//        todayDayBuilder: (context, date, _) {
-//          return Container(
-//            margin: const EdgeInsets.all(4.0),
-//            padding: const EdgeInsets.only(top: 5.0, left: 6.0),
-//            color: Colors.amber[400],
-//            width: 100,
-//            height: 100,
-//            child: Text(
-//              '${date.day}',
-//              style: TextStyle().copyWith(fontSize: 16.0),
-//            ),
-//          );
-//        },
-//        markersBuilder: (context, date, events, holidays) {
-//          final children = <Widget>[];
-//
-//          if (events.isNotEmpty) {
-//            children.add(
-//              Positioned(
-//                right: 1,
-//                bottom: 1,
-//                child: _buildEventsMarker(date, events),
-//              ),
-//            );
-//          }
-//
-//          if (holidays.isNotEmpty) {
-//            children.add(
-//              Positioned(
-//                right: -2,
-//                top: -2,
-//                child: _buildHolidaysMarker(),
-//              ),
-//            );
-//          }
-//
-//          return children;
-//        },
-//      ),
-//      onDaySelected: (date, events) {
-//        _onDaySelected(date, events);
-//        _animationController.forward(from: 0.0);
-//      },
-//      onVisibleDaysChanged: _onVisibleDaysChanged,
-//      onCalendarCreated: _onCalendarCreated,
-//    );
-//  }
-
-//  Widget _buildEventsMarker(DateTime date, List events) {
-//    return AnimatedContainer(
-//      duration: const Duration(milliseconds: 300),
-//      decoration: BoxDecoration(
-//        shape: BoxShape.rectangle,
-//        color: _calendarController.isSelected(date)
-//            ? Colors.brown[500]
-//            : _calendarController.isToday(date)
-//                ? Colors.brown[300]
-//                : Colors.blue[400],
-//      ),
-//      width: 16.0,
-//      height: 16.0,
-//      child: Center(
-//        child: Text(
-//          '${events.length}',
-//          style: TextStyle().copyWith(
-//            color: Colors.white,
-//            fontSize: 12.0,
-//          ),
-//        ),
-//      ),
-//    );
-//  }
-//
-//  Widget _buildHolidaysMarker() {
-//    return Icon(
-//      Icons.add_box,
-//      size: 20.0,
-//      color: Colors.blueGrey[800],
-//    );
-//  }
 
   Widget _buildEventList() {
     Future<DocumentSnapshot> mappingfunc(event) async {
@@ -363,6 +240,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
 
     return ListView(
+      padding: EdgeInsets.only(left: 20, right: 20),
       children: _selectedEvents.map((event) {
         return Container(
           decoration: BoxDecoration(
@@ -371,9 +249,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             //borderRadius: BorderRadius.circular(12.0),
           ),
           //margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Card(child: ListTile(
-            title: Text(event,
-                style: TextStyle(color: Colors.grey[900])),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15)
+            ),
+            child: ListTile(
+              contentPadding: EdgeInsets.only(top: 6, bottom: 6, left: 10, right: 10),
+            title: Center(
+        child: Text(event,
+                style: TextStyle(color: Colors.grey[900], fontSize: 15), textAlign: TextAlign.center,)),
             onTap: () {
               mappingfunc(event).then((DocumentSnapshot promotion) {
                 mappingfunc2(promotion.data['company'])
@@ -403,7 +287,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               print('$event tapped!');
             },
           ),
-            color: Colors.white,
+            color: Colors.teal[200],
         ),);
       }).toList(),
     );
