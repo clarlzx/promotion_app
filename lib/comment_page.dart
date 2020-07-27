@@ -101,7 +101,7 @@ class Comment extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: 6.0),
       child: Container(
-        color: Colors.white,
+        color: Colors.teal[100],
         child: Column(
           children: <Widget>[
             Card(
@@ -250,6 +250,8 @@ class CommentPageState extends State<CommentPage> {
               },
               style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
+                fillColor: Colors.white,
+                filled: true,
                 contentPadding: const EdgeInsets.all(20.0),
                 hintText: "Add comment here",
                 hintStyle: TextStyle(color: Colors.black),

@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         // Define the default brightness and colors.
         brightness: Brightness.dark,
-        primaryColor: Colors.black,
+        primaryColor: Colors.grey[900],
         scaffoldBackgroundColor: Colors.grey[50],
 
         // Define the default font family
@@ -597,7 +597,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     Widget mainWidget = AppBar(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey[900],
       title: customWidget,
 //      actions: <Widget>[
 //        IconButton(
@@ -615,7 +615,7 @@ class _MyHomePageState extends State<MyHomePage> {
       mainWidget,
       AppBar(
           title: Text('Promotion Calendar'),
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.grey[900],
           leading: IconButton(
             icon: Icon(Icons.calendar_today),
             color: Colors.white,
@@ -676,13 +676,23 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       )),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[900],
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             title: Text('Home'),
           ),
-        ));
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            title: Text('Calendar'),
+          )
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.teal[200],
+        unselectedItemColor: Colors.white,
+      )
+    ));
   }
 
   Widget _buildBody(BuildContext context) {
@@ -1278,7 +1288,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black)),
+                      style: GoogleFonts.roboto(
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black
+                      )),
                 ),
               ]),
             ),
@@ -1530,7 +1543,11 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
         .get();
     databaselikes = snapShot.data['likes'];
     databasedislikes = snapShot.data['dislikes'];
-    promourl = snapShot.data["href"];
+    if (snapShot.data["href"] != null) {
+      promourl = snapShot.data["href"];
+    } else {
+      promourl = "";
+    }
     final snapShot2 =
         await Firestore.instance.collection('all_users').document(userid).get();
     if (snapShot2 == null || !snapShot2.exists) {
@@ -1568,9 +1585,9 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     Future<void> share() async {
       await FlutterShare.share(
         title: args.title,
-        text: "Don't miss out on this promotion: " +
-            args.title +
-            ". For more information, visit " + url + ".",
+        text: url != "" ? "Don't miss out on this promotion: " +
+            args.title +  ". For more information, visit " + url + "." :
+            "Don't miss out on this promotion: " + args.title + '.'
 //          linkUrl: 'https://flutter.dev/',
 //          chooserTitle: 'Example Chooser Title'
       );
@@ -1668,6 +1685,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       if (await canLaunch(url)) {
         await launch(url, forceSafariVC: false, forceWebView: false);
       } else {
+        Toast.show("No URL available", context, duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
         throw 'Could not launch $url';
       }
     }
@@ -1676,9 +1694,9 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     Color dislikeiconcolour = Colors.black;
 
     if (liked) {
-      likeiconcolour = Colors.teal;
+      likeiconcolour = Colors.teal[200];
     } else if (disliked) {
-      dislikeiconcolour = Colors.teal;
+      dislikeiconcolour = Colors.teal[200];
     } else if (!liked) {
       likeiconcolour = Colors.black;
     } else if (!disliked) {
@@ -1689,10 +1707,16 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       List<Widget> locations = [];
       if (args.company.location.isEmpty) {
         locations.add(Padding(
-            padding: EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 40),
             child: Text(
               "No location data available",
-              style: TextStyle(color: Colors.black),
+              style: GoogleFonts.roboto(
+                fontWeight: FontWeight.w300,
+                fontSize: 16,
+                textStyle: TextStyle(
+                  color: Colors.black
+                )
+              ),
             )));
       } else {
         for (String location in args.company.location) {
@@ -1714,7 +1738,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
 
     return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.grey[900],
           actions: <Widget>[
             IconButton(
               //EDIT HERE FOR ADD
@@ -1747,9 +1771,9 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                           padding: EdgeInsets.all(20.0),
                           child: Text(args.title,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: GoogleFonts.roboto(
                                 fontSize: 30,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 color: Colors.black,
                               ))),
                       Card(
@@ -1859,7 +1883,10 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                             height: 80,
                             width: 175,
                             child: Card(
-                              color: Colors.teal,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              color: Colors.teal[200],
                               child: Padding(
                                 padding: EdgeInsets.only(left: 15, top: 8),
                                 child: RichText(
@@ -1869,9 +1896,15 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                     children: <TextSpan>[
                                       TextSpan(
                                           text: 'Start Date' + '\n',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      TextSpan(text: args.start_date),
+                                          style: GoogleFonts.roboto(
+                                              fontWeight: FontWeight.w700)),
+                                      TextSpan(text: args.start_date,
+                                        style: GoogleFonts.roboto(
+                                          textStyle: TextStyle(
+                                            fontWeight: FontWeight.w300,
+                                          )
+                                        )
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -1883,7 +1916,10 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                             height: 80,
                             width: 175,
                             child: Card(
-                              color: Colors.teal,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              color: Colors.teal[200],
                               child: Padding(
                                 padding: EdgeInsets.only(left: 15, top: 8),
                                 child: RichText(
@@ -1893,9 +1929,16 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                     children: <TextSpan>[
                                       TextSpan(
                                           text: 'End Date' + '\n',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      TextSpan(text: args.end_date),
+                                          style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.w700)),
+                                      TextSpan(text: args.end_date,
+                                        style: GoogleFonts.roboto(
+                                          textStyle: TextStyle(
+                                            color: Colors.black
+                                          ),
+                                          fontWeight: FontWeight.w300,
+                                        )
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -1909,7 +1952,10 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                         height: 80,
                         width: 350,
                         child: Card(
-                          color: Colors.teal,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          color: Colors.teal[200],
                           child: Padding(
                             padding: EdgeInsets.only(left: 15, top: 8),
                             child: RichText(
@@ -1919,9 +1965,14 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                 children: <TextSpan>[
                                   TextSpan(
                                       text: 'Company' + '\n',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  TextSpan(text: args.company.title),
+                                      style: GoogleFonts.roboto(
+                                        fontWeight: FontWeight.w700
+                                      )),
+                                  TextSpan(text: args.company.title,
+                                    style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.w300,
+                                    )
+                                  ),
                                 ],
                               ),
                             ),
@@ -1933,13 +1984,19 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                             left: 5, right: 5, top: 5, bottom: 30),
                         width: 350,
                         child: Card(
-                          color: Colors.teal,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          color: Colors.teal[200],
                           child: ExpansionTile(
                             title: Text('Locations',
-                                style: TextStyle(
-                                    fontSize: 19.0,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold)),
+                                style: GoogleFonts.roboto(
+                                  textStyle: TextStyle(
+                                    color: Colors.black
+                                  ),
+                                  fontSize: 19.0,
+                                  fontWeight: FontWeight.w700
+                                )),
                             children: displaylocations(),
                           ),
                         ),

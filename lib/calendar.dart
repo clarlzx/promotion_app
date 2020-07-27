@@ -167,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 //      appBar: AppBar(
 //        title: Text(widget.title),
 //      ),
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Colors.grey[800],
       body: Column(
         mainAxisSize: MainAxisSize.max,
         children: <Widget>[
