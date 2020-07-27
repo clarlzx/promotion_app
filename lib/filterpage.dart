@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PromotionFilter{
 
@@ -11,8 +12,10 @@ class PromotionFilter{
   final Map<String, bool> checkedCompanyMap;
   final Map<String, bool> checkedDurationMap;
   final Map<String, bool> checkedLocationMap;
+  final Stream<UnmodifiableListView<Company>> companies;
 
-  PromotionFilter(this.promotions, this.checkedTypeMap, this.checkedCompanyMap, this.checkedDurationMap, this.checkedLocationMap);
+  PromotionFilter(this.promotions, this.checkedTypeMap, this.checkedCompanyMap,
+      this.checkedDurationMap, this.checkedLocationMap, this.companies);
 
 }
 
@@ -57,30 +60,65 @@ class ExtractFilterPromotion extends StatelessWidget {
           }
 
           if (result.isEmpty) {
-            return Center(
-              child: Text(
-                'No Promotions Found',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20.0
-                ),
-              )
+            return Container(
+                height: double.infinity,
+                width: double.infinity,
+                color: Colors.teal[100],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(
+                        height: 90,
+                        width: 90,
+                        child: Image(
+                            image: AssetImage("assets/kinda_filled_beaver.png")
+                        )
+                    ),
+                    Text(
+                        'No Promotions Found',
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(color: Colors.grey[850]),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                        )
+                    )
+                  ],
+                )
             );
           }
 
           Future _getLocation() async{
             List<Promotion> near_me = [];
+            List<String> near_companies = [];
+            List<String> alrcheckedCompanies = [];
             Position curr_position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
+            List<Company> companiesList = await args.companies.first.then((companyLst) {
+              return companyLst;
+            });
+
             for (Promotion promo in result) {
-              for (String location in promo.company.location) {
-                List<Placemark> placemark = await Geolocator().placemarkFromAddress(location);
-                Position temp_position = placemark[0].position;
-                double distance = await Geolocator().distanceBetween(curr_position.latitude,
-                    curr_position.longitude, temp_position.latitude, temp_position.longitude);
-                if (distance <= 3500) { //distance in metres
+              if (alrcheckedCompanies.contains(promo.company.title)) {
+                if (near_companies.contains(promo.company.title)) {
                   near_me.add(promo);
-                  break;
+                }
+              } else {
+                for (String location in promo.company.location) {
+                  alrcheckedCompanies.add(promo.company.title);
+                  List<Placemark> placemark = await Geolocator()
+                      .placemarkFromAddress(location);
+                  Position temp_position = placemark[0].position;
+                  double distance = await Geolocator().distanceBetween(
+                      curr_position.latitude,
+                      curr_position.longitude, temp_position.latitude,
+                      temp_position.longitude);
+                  if (distance <= 3500) {
+                    near_companies.add(
+                        promo.company.title); //distance in metres
+                    near_me.add(promo);
+                    break;
+                  }
                 }
               }
             }
@@ -93,69 +131,254 @@ class ExtractFilterPromotion extends StatelessWidget {
               builder: (context, snapshot){
                 if (snapshot.hasData) {
                   if (snapshot.data.toList().isEmpty) {
-                    return Center(
-                        child: Text(
-                          'No Promotions Found',
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 20.0
-                          ),
+                    return Container(
+                        height: double.infinity,
+                        width: double.infinity,
+                        color: Colors.teal[100],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            SizedBox(
+                                height: 90,
+                                width: 90,
+                                child: Image(
+                                    image: AssetImage("assets/kinda_filled_beaver.png")
+                                )
+                            ),
+                            Text(
+                                'No Promotions Found',
+                                style: GoogleFonts.roboto(
+                                  textStyle: TextStyle(color: Colors.grey[850]),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 22,
+                                )
+                            )
+                          ],
                         )
                     );
                   } else {
-                    return ListView(
-                        children: snapshot.data.map<ListTile>((promotion) =>
-                            ListTile(
-                              title: Text(promotion.title,
-                                  style: TextStyle(color: Colors.black)
+                    return Container(
+                        color: Colors.teal[100],
+                        child: GridView.count(
+                            crossAxisCount: 2,
+                            padding: EdgeInsets.all(12.0),
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            children: snapshot.data.map<Card>((x) => Card(
+//                              shadowColor: Colors.grey[300],
+//                              elevation: 5.0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
                               ),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/promoDetails',
-                                  arguments: promotion,
-                                );
-                              },
-                            )).toList()
-                    );
+                              child: Material(
+                                borderRadius: BorderRadius.circular(15),
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: InkWell(
+                                    child: Stack(
+                                        children: <Widget>[
+                                          Align(
+                                              alignment: Alignment.bottomRight,
+                                              child: Container(
+                                                  height: 80,
+                                                  width: 80,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(15.0),
+                                                    image: DecorationImage(
+                                                      colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.7),
+                                                          BlendMode.dstATop),
+                                                      image: NetworkImage(
+                                                        x.company.logoURL,
+                                                      ),
+                                                      alignment: Alignment.topCenter,
+                                                    ),
+                                                  )
+                                              )
+                                          ),
+                                          Align(
+                                              alignment: Alignment.topLeft.add(Alignment(0.5,0.3)),
+                                              child: SizedBox(
+                                                width: 130,
+                                                height: 100,
+                                                child: Text(
+                                                    x.title,
+                                                    overflow: TextOverflow.fade,
+                                                    style: GoogleFonts.roboto(
+                                                      textStyle: TextStyle(color: Colors.grey[850]),
+                                                      fontWeight: FontWeight.w800,
+                                                      fontSize: 21,
+                                                    )
+                                                ),
+                                              )
+                                          ),
+                                        ]),
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/promoDetails',
+                                        arguments: x,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            )
+                            ).toList()
+                        ));
                   }
                 } else if (snapshot.hasError) {
                   print(snapshot.error);
-                  return Center(
-                    child: Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 60,
-                    ),
+                  return Container(
+                      height: double.infinity,
+                      width: double.infinity,
+                      color: Colors.teal[100],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(
+                              height: 90,
+                              width: 90,
+                              child: Image(
+                                  image: AssetImage("assets/kinda_filled_beaver.png")
+                              )
+                          ),
+                          Text(
+                            'Sorry an error has occurred',
+                            style: GoogleFonts.roboto(
+                              textStyle: TextStyle(color: Colors.grey[850]),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 22,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                          ),
+                          Align(
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 60,
+                            )
+                          )
+                        ],
+                      )
                   );
                 } else {
-                  return Center(
-                    child: SizedBox(
-                      child: CircularProgressIndicator(),
-                      width: 60,
-                      height: 60,
-                    )
+                  return Container(
+                      height: double.infinity,
+                      width: double.infinity,
+                      color: Colors.teal[100],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(
+                              height: 90,
+                              width: 90,
+                              child: Image(
+                                  image: AssetImage("assets/kinda_filled_beaver.png")
+                              )
+                          ),
+                          Text(
+                              'Please wait while\nwe retrieve the promotions',
+                              style: GoogleFonts.roboto(
+                                textStyle: TextStyle(color: Colors.grey[850]),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 22,
+                              ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                          ),
+                          CircularProgressIndicator(
+                          ),
+                        ],
+                      )
                   );
                 }
               }
             );
           }
 
-          return ListView(
-            children: result.map<ListTile>((promotion) =>
-              ListTile(
-                  title: Text(promotion.title,
-                      style: TextStyle(color: Colors.black)
-                  ),
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/promoDetails',
-                    arguments: promotion,
-                  );
-                },
-                )).toList()
-          );
+          return Container(
+              color: Colors.teal[100],
+              child: GridView.count(
+                  crossAxisCount: 2,
+                  padding: EdgeInsets.all(12.0),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  children: result.map<Card>((x) => Card(
+//                    shadowColor: Colors.grey[300],
+//                    elevation: 5.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    child: Material(
+                      borderRadius: BorderRadius.circular(15),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: InkWell(
+                          child: Stack(
+                              children: <Widget>[
+                                Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: Container(
+                                        height: 80,
+                                        width: 80,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(15.0),
+                                          image: DecorationImage(
+                                            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.7),
+                                                BlendMode.dstATop),
+                                            image: NetworkImage(
+                                              x.company.logoURL,
+                                            ),
+                                            alignment: Alignment.topCenter,
+                                          ),
+                                        )
+                                    )
+                                ),
+                                Align(
+                                    alignment: Alignment.topLeft.add(Alignment(0.5,0.3)),
+                                    child: SizedBox(
+                                      width: 130,
+                                      height: 100,
+                                      child: Text(
+                                          x.title,
+                                          overflow: TextOverflow.fade,
+                                          style: GoogleFonts.roboto(
+                                            textStyle: TextStyle(color: Colors.grey[850]),
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 21,
+                                          )
+                                      ),
+                                    )
+                                ),
+                              ]),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/promoDetails',
+                              arguments: x,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  )
+                  ).toList()
+              ));
         }
       )
     );

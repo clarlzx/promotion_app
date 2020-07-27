@@ -2,7 +2,7 @@ import 'dart:collection';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart'; //used to add time lag for checkbox button
+import 'package:google_fonts/google_fonts.dart';
 import 'home.dart';
 
 class FilterList extends StatefulWidget {
@@ -25,11 +25,27 @@ class _FilterState extends State<FilterList> {
     // TODO: implement build
     if (!widget.type.child_id.isEmpty) {
       return ExpansionTile(
-        title: Text(widget.type.title),
+        title: Text(
+          widget.type.title,
+          style: GoogleFonts.roboto(
+            textStyle: TextStyle(color: Colors.white),
+            fontWeight: FontWeight.w300,
+            fontSize: 17.5,
+          )
+        ),
         children: <Widget>[
           for (Type childType in widget.typeMap[widget.type])
             CheckboxListTile(
-              title: Text(childType.title, style: TextStyle()),
+              title: Text(
+                childType.title,
+                style: GoogleFonts.roboto(
+                  textStyle: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15
+                  )
+                )
+              ),
               value: widget.checkedTypeMap[childType.title],
               onChanged: (val) {
                 setState(() {
@@ -65,7 +81,15 @@ class _FilterCompanyState extends State<FilterCompanyList> {
   @override
   Widget build(BuildContext context) {
     return CheckboxListTile(
-      title: Text(widget.company.title),
+      title: Text(widget.company.title,
+          style: GoogleFonts.roboto(
+              textStyle: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 15
+              )
+          )
+      ),
       value: widget.checkedCompanyMap[widget.company.title],
       onChanged: (newValue) {
         setState(() {
@@ -93,7 +117,15 @@ class _FilterDurationState extends State<FilterDurationList> {
   @override
   Widget build(BuildContext context) {
     return CheckboxListTile(
-      title: Text(widget.title),
+      title: Text(widget.title,
+          style: GoogleFonts.roboto(
+              textStyle: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 15
+              )
+          )
+      ),
       value: widget.checkedDurationMap[widget.title],
       onChanged: (newValue) {
         setState(() {
@@ -120,7 +152,15 @@ class _FilterLocationState extends State<FilterLocation> {
   Widget build(BuildContext context) {
 
     return CheckboxListTile(
-      title: Text('Near Me'),
+      title: Text('Near Me',
+        style: GoogleFonts.roboto(
+            textStyle: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+                fontSize: 15
+            )
+        )
+      ),
       value: widget.checkedLocationMap.values.first,
       onChanged: (newValue) {
         setState(() {
