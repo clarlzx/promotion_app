@@ -52,10 +52,11 @@ class MyApp extends StatelessWidget {
       ),
       home: MyHomePage(bloc: bloc, userid: userid),
       routes: {
+        '/homePage' : (context) => MyHomePage(bloc: bloc, userid: userid),
         '/promoDetails': (context) => ExtractPromoDetails(userid),
         '/filterPage': (context) => ExtractFilterPromotion(),
         '/viewMore': (context) => ViewMoreScreen(),
-        MyHomePage.routeName: (BuildContext context) => new MyHomePage(bloc: bloc, userid: userid),
+//        MyHomePage.routeName: (BuildContext context) => new MyHomePage(bloc: bloc, userid: userid),
       },
     );
   }
@@ -67,7 +68,7 @@ class MyHomePage extends StatefulWidget {
 
   MyHomePage({Key key, this.bloc, this.userid}) : super(key: key);
 
-  static String routeName = "/MyHomePage";
+//  static String routeName = "/MyHomePage";
 
   @override
   _MyHomePageState createState() {
@@ -76,8 +77,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
   AndroidInitializationSettings androidInitializationSettings;
   IOSInitializationSettings iosInitializationSettings;
   InitializationSettings initializationSettings;
@@ -93,18 +95,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> endnotification(
       String promoid, String title, DateTime date) async {
-    DateTime datetime = DateTime.now();
-//    DateTime datetime = date;
+    DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
-        AndroidNotificationDetails(
-            'Channel_ID', 'Channel_title', 'Channel_body',
-            priority: Priority.High,
-            importance: Importance.Max,
-            ticker: 'ticker');
+    AndroidNotificationDetails(
+        'Channel_ID', 'Channel_title', 'Channel_body',
+        priority: Priority.High,
+        importance: Importance.Max,
+        ticker: 'ticker');
     IOSNotificationDetails iosNotificationDetails = IOSNotificationDetails();
     NotificationDetails notificationDetails =
-        NotificationDetails(androidNotificationDetails, iosNotificationDetails);
+    NotificationDetails(androidNotificationDetails, iosNotificationDetails);
     await flutterLocalNotificationsPlugin.schedule(
         promoid.hashCode,
         "Last day for this awesome promotion!",
@@ -122,14 +123,14 @@ class _MyHomePageState extends State<MyHomePage> {
     DateTime datetime = date;
     print(datetime.toString());
     AndroidNotificationDetails androidNotificationDetails =
-        AndroidNotificationDetails(
-            'Channel_ID', 'Channel_title', 'Channel_body',
-            priority: Priority.High,
-            importance: Importance.Max,
-            ticker: 'ticker');
+    AndroidNotificationDetails(
+        'Channel_ID', 'Channel_title', 'Channel_body',
+        priority: Priority.High,
+        importance: Importance.Max,
+        ticker: 'ticker');
     IOSNotificationDetails iosNotificationDetails = IOSNotificationDetails();
     NotificationDetails notificationDetails =
-        NotificationDetails(androidNotificationDetails, iosNotificationDetails);
+    NotificationDetails(androidNotificationDetails, iosNotificationDetails);
     await flutterLocalNotificationsPlugin.schedule(
         promoid.hashCode + 1,
         "Don't miss this awesome promotion!",
@@ -148,15 +149,15 @@ class _MyHomePageState extends State<MyHomePage> {
     await flutterLocalNotificationsPlugin.cancel(promoid.hashCode + 1);
   }
 
-  Future onSelectNotification(String payLoad) async {
-    Promotion selectedPromo;
-    await widget.bloc.promotions.first.then((promotionList) {
-      selectedPromo =
-          promotionList.firstWhere((promo) => promo.title == payLoad);
-    });
-    return Navigator.pushNamed(context, '/promoDetails',
-        arguments: selectedPromo);
-  }
+//  Future onSelectNotification(String payLoad) async {
+//    Promotion selectedPromo;
+//    await widget.bloc.promotions.first.then((promotionList) {
+//      selectedPromo =
+//          promotionList.firstWhere((promo) => promo.title == payLoad);
+//    });
+//    return Navigator.pushNamed(context, '/promoDetails',
+//        arguments: selectedPromo);
+//  }
 
   Future onDidReceiveLocalNotification(
       int id, String title, String body, String payLoad) async {
@@ -169,18 +170,18 @@ class _MyHomePageState extends State<MyHomePage> {
     return showDialog(
         context: context,
         builder: (BuildContext context) => CupertinoAlertDialog(
-              title: Text(title),
-              content: Text(body),
-              actions: [
-                CupertinoDialogAction(
-                    isDefaultAction: true,
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/promoDetails',
-                          arguments: selectedPromo);
-                    },
-                    child: Text("okay"))
-              ],
-            ));
+          title: Text(title),
+          content: Text(body),
+          actions: [
+            CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/promoDetails',
+                      arguments: selectedPromo);
+                },
+                child: Text("okay"))
+          ],
+        ));
   }
 
   WebScraper webScraper;
@@ -217,16 +218,16 @@ class _MyHomePageState extends State<MyHomePage> {
       while (await webScraper.loadWebPage(path + '$page_num')) {
         List<Map<String, dynamic>> results = webScraper.getElement(
             'div.tabs1Content > '
-            'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ',
+                'article.mh-loop-item.clearfix > div.mh-loop-thumb > a ',
             ['href']);
         List<Map<String, dynamic>> next_page = webScraper.getElement(
             'div.tabs1Content > '
-            'div.mh-loop-pagination.clearfix > a.next.page-numbers',
+                'div.mh-loop-pagination.clearfix > a.next.page-numbers',
             ['title']);
 
         for (Map<String, dynamic> map in results) {
           String str =
-              map['attributes']['href'].split('https://singpromos.com')[1];
+          map['attributes']['href'].split('https://singpromos.com')[1];
           //filter out news
           if (!str.startsWith('/news')) {
             all_href.add(str);
@@ -270,7 +271,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
       if (duration_company.isNotEmpty) {
         List<String> duration_company_str_lst =
-            duration_company[0]['title'].split('Location');
+        duration_company[0]['title'].split('Location');
         company = duration_company_str_lst[1].trim();
         start_date = convert_date(duration_company_str_lst[0]
             .split('(')[0]
@@ -351,14 +352,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
                   break;
                 }
-                final now = DateTime.now();
-                Firestore.instance.collection("web_promotion").document(
-                  title
-                ).setData({'title': title, 'company': company, 'types': types,
-                  'clicks': 0, 'start_date': start_date, 'end_date': end_date,
-                  'comments': [], 'dislikes': 0, 'likes' : 0, 'dateAdded' : Timestamp.fromDate(now),
-                  'href' : "https://singpromos.com" + href
-                });
               }
             }
 
@@ -376,7 +369,8 @@ class _MyHomePageState extends State<MyHomePage> {
               'comments': [],
               'dislikes': 0,
               'likes': 0,
-              'dateAdded': Timestamp.fromDate(now)
+              'dateAdded': Timestamp.fromDate(now),
+              'href' : "https://singpromos.com" + href
             });
           }
         }).catchError((error) => print(" Got error: $error"));
@@ -418,13 +412,13 @@ class _MyHomePageState extends State<MyHomePage> {
               .get()
               .then((userData) {
             List<String> clickedBefore =
-                List<String>.from(userData.data['clickedBefore']);
+            List<String>.from(userData.data['clickedBefore']);
             List<String> disliked_promotions =
-                List<String>.from(userData.data['disliked_promotions']);
+            List<String>.from(userData.data['disliked_promotions']);
             List<String> liked_promotions =
-                List<String>.from(userData.data['liked_promotions']);
+            List<String>.from(userData.data['liked_promotions']);
             List<String> saved_promotion =
-                List<String>.from(userData.data['saved_promotion']);
+            List<String>.from(userData.data['saved_promotion']);
             clickedBefore.remove(docSnapshot.data['title']);
             disliked_promotions.remove(docSnapshot.data['title']);
             liked_promotions.remove(docSnapshot.data['title']);
@@ -477,7 +471,7 @@ class _MyHomePageState extends State<MyHomePage> {
       collection.documents.forEach((docSnapshot) {
         if (docSnapshot.data['child_id'] != null) {
           map[docSnapshot.data['title']] =
-              List<String>.from(docSnapshot.data['child_id']);
+          List<String>.from(docSnapshot.data['child_id']);
         }
       });
     });
@@ -589,8 +583,8 @@ class _MyHomePageState extends State<MyHomePage> {
         onDidReceiveLocalNotification: onDidReceiveLocalNotification);
     initializationSettings = InitializationSettings(
         androidInitializationSettings, iosInitializationSettings);
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onSelectNotification: onSelectNotification);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+//        onSelectNotification: onSelectNotification);
   }
 
   @override
@@ -629,21 +623,21 @@ class _MyHomePageState extends State<MyHomePage> {
       return showDialog(
           context: context,
           builder: (context) => AlertDialog(
-                title: Text(
-                  "Do you really want to exit the app?",
-                  style: TextStyle(color: Colors.black),
-                ),
-                actions: <Widget>[
-                  FlatButton(
-                    child: Text("No", style: TextStyle(color: Colors.black)),
-                    onPressed: () => Navigator.pop(context, false),
-                  ),
-                  FlatButton(
-                    child: Text("Yes", style: TextStyle(color: Colors.black)),
-                    onPressed: () => Navigator.pop(context, true),
-                  )
-                ],
-              ));
+            title: Text(
+              "Do you really want to exit the app?",
+              style: TextStyle(color: Colors.black),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text("No", style: TextStyle(color: Colors.black)),
+                onPressed: () => Navigator.pop(context, false),
+              ),
+              FlatButton(
+                child: Text("Yes", style: TextStyle(color: Colors.black)),
+                onPressed: () => Navigator.pop(context, true),
+              )
+            ],
+          ));
     }
 
     var checkedLocationMap = new Map<String, bool>();
@@ -658,320 +652,322 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
 
+
     return WillPopScope(
-    onWillPop: _onBackPressed,
-    child: Scaffold(
-      appBar: titles.elementAt(_selectedIndex),
-      body: Center(
-        child: options.elementAt(_selectedIndex)
-      ),
-      drawer: Drawer(
-          child: ListView(
-        children: <Widget>[
-          Container(
-              height: MediaQuery.of(context).size.height * 0.14,
-              child: DrawerHeader(
-                child: Text(
-                  'Filter\nPromotions',
-                    style: GoogleFonts.roboto(
-                      textStyle: TextStyle(color: Colors.white),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 26,
-                    )
+        onWillPop: _selectedIndex == 0 ? _onBackPressed : () async => false,
+        child: Scaffold(
+            appBar: titles.elementAt(_selectedIndex),
+            body: Center(
+                child: options.elementAt(_selectedIndex)
+            ),
+            drawer: Drawer(
+                child: ListView(
+                  children: <Widget>[
+                    Container(
+                        height: MediaQuery.of(context).size.height * 0.14,
+                        child: DrawerHeader(
+                          child: Text(
+                              'Filter\nPromotions',
+                              style: GoogleFonts.roboto(
+                                textStyle: TextStyle(color: Colors.white),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 26,
+                              )
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                          ),
+                        )),
+                    _buildFilter(context, checkedLocationMap, checkedDurationMap),
+                  ],
+                )
+            ),
+            drawerCallback: (bool open) => _onDrawerClose(open, context),
+            bottomNavigationBar: BottomNavigationBar(
+              backgroundColor: Colors.grey[900],
+              items: const <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  title: Text('Home'),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                ),
-              )),
-          _buildFilter(context, checkedLocationMap, checkedDurationMap),
-        ],
-        )
-      ),
-      drawerCallback: (bool open) => _onDrawerClose(open, context),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.grey[900],
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            title: Text('Home'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            title: Text('Calendar'),
-          )
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Colors.teal[200],
-        unselectedItemColor: Colors.white,
-      )
-    ));
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_today),
+                  title: Text('Calendar'),
+                )
+              ],
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+              selectedItemColor: Colors.teal[200],
+              unselectedItemColor: Colors.white,
+            )
+        ));
   }
 
   Widget _buildBody(BuildContext context) {
     // TODO: get actual snapshot from Cloud Firestore
 
     return Container(
-      height: double.infinity,
-      width: double.infinity,
-      color: Colors.teal[50],
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.all(17.0),
-            ),
-            Align(
-              alignment: Alignment(-0.8, 0),
-              child: Text(
-                "Be a saver,",
-                textAlign: TextAlign.left,
-                style: GoogleFonts.roboto(
-                  textStyle: TextStyle(color: Colors.black),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 31,
-                )
-              )
-            ),
-            Align(
-              alignment: Alignment(-0.5, 0),
-              child: Text(
-                "never miss any deals!",
-                style: GoogleFonts.roboto(
-                  textStyle: TextStyle(color: Colors.black),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 31,
-                )
-              )
-            ),
-            GestureDetector(
-              child: Card(
-                margin: EdgeInsets.symmetric(vertical: 25.0, horizontal: 27.0),
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(70.0),
+        height: double.infinity,
+        width: double.infinity,
+        color: Colors.teal[50],
+        child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.all(17.0),
                 ),
-                child: ListTile(
-                  leading: Icon(Icons.search, color: Colors.grey[800], size: 45.0),
-                ),
-              ),
-              onTap: () {
-                showSearch(
-                    context: context,
-                    delegate: PromotionSearch(widget.bloc.promotions));
-              }
-            ),
-            Card(
-              color: Colors.teal[50],
-              elevation: 0,
-              child: ListTile(
-                leading: Image(
-                  image: AssetImage("assets/fire.png"),
-                  height: 40,
-                ),
-                title: Text(
-                  "Hot Deals",
-                  style: GoogleFonts.roboto(
-                    textStyle: TextStyle(color: Colors.black),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 29,
-                  ),
-                ),
-              )
-            ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15.0),
-                color: Colors.teal[100],
-              ),
-              height: 275.0,
-              width: 380.0,
-              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
-              child: Stack(
-                children: <Widget>[
-                  Align(
-                    alignment: Alignment.center,
-                    child: Container(
-                      height: 240,
-                      width: 355,
-                      child: _buildHotSection(context),
+                Container(
+                  width: MediaQuery.of(context).size.width*0.87,
+                    child: Text(
+                        "Be a saver,\nnever miss any deals!",
+                        textAlign: TextAlign.start,
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(color: Colors.black),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 31,
+                        ),
                     ),
+                ),
+                GestureDetector(
+                    child: Card(
+                      margin: EdgeInsets.symmetric(vertical: 25.0, horizontal: 27.0),
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(70.0),
+                      ),
+                      child: ListTile(
+                        leading: Icon(Icons.search, color: Colors.grey[800], size: 45.0),
+                      ),
+                    ),
+                    onTap: () {
+                      showSearch(
+                          context: context,
+                          delegate: PromotionSearch(widget.bloc.promotions));
+                    }
+                ),
+                Card(
+                    color: Colors.teal[50],
+                    elevation: 0,
+                    child: ListTile(
+                      leading: Image(
+                        image: AssetImage("assets/fire.png"),
+                        height: 40,
+                      ),
+                      title: Text(
+                        "Hot Deals",
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(color: Colors.black),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 29,
+                        ),
+                      ),
+                    )
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.92,
+                  height: 245,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15.0),
+                    color: Colors.teal[100],
                   ),
-                  Align(
-                    alignment: Alignment(0.9,0.98),
-                    child: Container(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/viewMore',
-                            arguments: ViewMore(widget.bloc.Hotpromotions, "Hot"),
-                          );
-                        },
-                        child: RichText(
-                          text: TextSpan(
-                            text: "View More ",
-                            style: GoogleFonts.roboto(
-                              textStyle: TextStyle(color: Colors.grey[700]),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 21.0,
+//                  height: 275.0,
+//                  width: 380.0,
+                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
+                  child: Container(
+                    child: Column(
+                      children: <Widget>[
+                        Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            height: 180,
+                            width: MediaQuery.of(context).size.width*0.85,
+                            child: _buildHotSection(context),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment(0.9,0.98),
+                          child: Container(
+                            child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/viewMore',
+                                    arguments: ViewMore(widget.bloc.Hotpromotions, "Hot"),
+                                  );
+                                },
+                                child: RichText(
+                                    text: TextSpan(
+                                        text: "View More ",
+                                        style: GoogleFonts.roboto(
+                                          textStyle: TextStyle(color: Colors.grey[700]),
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 21.0,
+                                        ),
+                                        children: <TextSpan>[
+                                          TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
+                                        ]
+                                    )
+                                )
                             ),
-                            children: <TextSpan>[
-                              TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
-                            ]
-                          )
-                        )
+                          ),
+                        ),
+                      ]
+                    )
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(10.0),
+                ),
+                Card(
+                    color: Colors.teal[50],
+                    elevation: 0,
+                    child: ListTile(
+                      leading: Image(
+                        image: AssetImage("assets/sparkles.png"),
+                        height: 40,
                       ),
-                    ),
-                  ),
-                ]
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(10.0),
-            ),
-            Card(
-                color: Colors.teal[50],
-                elevation: 0,
-                child: ListTile(
-                  leading: Image(
-                    image: AssetImage("assets/sparkles.png"),
-                    height: 40,
-                  ),
-                  title: Text(
-                    "New Deals",
-                    style: GoogleFonts.roboto(
-                      textStyle: TextStyle(color: Colors.black),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 29,
-                    ),
-                  ),
-                )
-            ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15.0),
-                color: Colors.teal[100],
-              ),
-              height: 275.0,
-              width: 380.0,
-              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
-              child: Stack(
-                  children: <Widget>[
-                    Align(
-                      alignment: Alignment.center,
-                      child: Container(
-                        height: 240,
-                        width: 355,
-                        child: _buildNewSection(context),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment(0.9,0.98),
-                      child: Container(
-                        child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/viewMore',
-                                arguments: ViewMore(widget.bloc.Newpromotions, "New"),
-                              );
-                            },
-                            child: RichText(
-                                text: TextSpan(
-                                    text: "View More ",
-                                    style: GoogleFonts.roboto(
-                                      textStyle: TextStyle(color: Colors.grey[700]),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 21.0,
-                                    ),
-                                    children: <TextSpan>[
-                                      TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
-                                    ]
-                                )
-                            )
+                      title: Text(
+                        "New Deals",
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(color: Colors.black),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 29,
                         ),
                       ),
-                    ),
-                  ]
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(10.0),
-            ),
-            Card(
-                color: Colors.teal[50],
-                elevation: 0,
-                child: ListTile(
-                  leading: Image(
-                    image: AssetImage("assets/bags.png"),
-                    height: 40,
+                    )
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.92,
+                  height: 245,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15.0),
+                    color: Colors.teal[100],
                   ),
-                  title: Text(
-                    "All Deals",
-                    style: GoogleFonts.roboto(
-                      textStyle: TextStyle(color: Colors.black),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 29,
-                    ),
+//                  height: 275.0,
+//                  width: 380.0,
+                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
+                  child: Container(
+                      child: Column(
+                          children: <Widget>[
+                            Align(
+                              alignment: Alignment.center,
+                              child: Container(
+                                height: 180,
+                                width: MediaQuery.of(context).size.width*0.85,
+                                child: _buildNewSection(context),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment(0.9,0.98),
+                              child: Container(
+                                child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/viewMore',
+                                        arguments: ViewMore(widget.bloc.Newpromotions, "New"),
+                                      );
+                                    },
+                                    child: RichText(
+                                        text: TextSpan(
+                                            text: "View More ",
+                                            style: GoogleFonts.roboto(
+                                              textStyle: TextStyle(color: Colors.grey[700]),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 21.0,
+                                            ),
+                                            children: <TextSpan>[
+                                              TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
+                                            ]
+                                        )
+                                    )
+                                ),
+                              ),
+                            ),
+                          ]
+                      )
                   ),
-                )
-            ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15.0),
-                color: Colors.teal[100],
-              ),
-              height: 275.0,
-              width: 380.0,
-              padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
-              child: Stack(
-                  children: <Widget>[
-                    Align(
-                      alignment: Alignment.center,
-                      child: Container(
-                        height: 240,
-                        width: 355,
-                        child: _buildSection(context),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(10.0),
+                ),
+                Card(
+                    color: Colors.teal[50],
+                    elevation: 0,
+                    child: ListTile(
+                      leading: Image(
+                        image: AssetImage("assets/bags.png"),
+                        height: 40,
                       ),
-                    ),
-                    Align(
-                      alignment: Alignment(0.9,0.98),
-                      child: Container(
-                        child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/viewMore',
-                                arguments: ViewMore(widget.bloc.promotions, ""),
-                              );
-                            },
-                            child: RichText(
-                                text: TextSpan(
-                                    text: "View More ",
-                                    style: GoogleFonts.roboto(
-                                      textStyle: TextStyle(color: Colors.grey[700]),
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 21.0,
-                                    ),
-                                    children: <TextSpan>[
-                                      TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
-                                    ]
-                                )
-                            )
+                      title: Text(
+                        "All Deals",
+                        style: GoogleFonts.roboto(
+                          textStyle: TextStyle(color: Colors.black),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 29,
                         ),
                       ),
-                    ),
-                  ]
-              ),
-            ),
-            Container(
-              height: 20,
+                    )
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.92,
+                  height: 245,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15.0),
+                    color: Colors.teal[100],
+                  ),
+//                  height: 275.0,
+//                  width: 380.0,
+                  padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 5.0),
+                  child: Container(
+                      child: Column(
+                          children: <Widget>[
+                            Align(
+                              alignment: Alignment.center,
+                              child: Container(
+                                height: 180,
+                                width: MediaQuery.of(context).size.width*0.85,
+                                child: _buildSection(context),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment(0.9,0.98),
+                              child: Container(
+                                child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/viewMore',
+                                        arguments: ViewMore(widget.bloc.promotions, ""),
+                                      );
+                                    },
+                                    child: RichText(
+                                        text: TextSpan(
+                                            text: "View More ",
+                                            style: GoogleFonts.roboto(
+                                              textStyle: TextStyle(color: Colors.grey[700]),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 21.0,
+                                            ),
+                                            children: <TextSpan>[
+                                              TextSpan(text: "➨", style: TextStyle(color: Colors.grey[600], fontSize: 24)),
+                                            ]
+                                        )
+                                    )
+                                ),
+                              ),
+                            ),
+                          ]
+                      )
+                  ),
+                ),
+                Container(
+                  height: 20,
+                )
+              ],
             )
-          ],
         )
-      )
     );
   }
 
@@ -999,11 +995,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text(
                   'By Type',
                   style: GoogleFonts.roboto(
-                    textStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
-                    )
+                      textStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      )
                   ),
                 ),
               ),
@@ -1078,12 +1074,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   context,
                   '/filterPage',
                   arguments: PromotionFilter(
-                    widget.bloc.promotions,
-                    checkedTypeMap,
-                    checkedCompanyMap,
-                    checkedDurationMap,
-                    checkedLocationMap,
-                    widget.bloc.companyStream
+                      widget.bloc.promotions,
+                      checkedTypeMap,
+                      checkedCompanyMap,
+                      checkedDurationMap,
+                      checkedLocationMap,
+                      widget.bloc.companyStream
                   ),
                 );
               },
@@ -1121,8 +1117,8 @@ class _MyHomePageState extends State<MyHomePage> {
               if (!type.child_id.isEmpty) {
                 typeMap[type] = type.child_id
                     .map((child_id) => snapshot.data
-                        .toList()
-                        .firstWhere((t) => t.title == child_id))
+                    .toList()
+                    .firstWhere((t) => t.title == child_id))
                     .toList();
               } else {
                 checkedTypeMap[type.title] = false;
@@ -1172,7 +1168,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: snapshot.data
                     .toList()
                     .map((x) =>
-                        _buildCompanyFilterListItem(x, checkedCompanyMap))
+                    _buildCompanyFilterListItem(x, checkedCompanyMap))
                     .toList(),
               );
             })
@@ -1192,15 +1188,15 @@ class _MyHomePageState extends State<MyHomePage> {
     checkedDurationMap['This Week'] = false;
 
     return ExpansionTile(
-      title: Text('Duration',
-          style: GoogleFonts.roboto(
-            textStyle: TextStyle(color: Colors.white),
-            fontWeight: FontWeight.w300,
-            fontSize: 17.5,
-          )
-      ),
-      children: checkedDurationMap.keys.map((keys) =>
-          FilterDurationList(title: keys, checkedDurationMap: checkedDurationMap)).toList()
+        title: Text('Duration',
+            style: GoogleFonts.roboto(
+              textStyle: TextStyle(color: Colors.white),
+              fontWeight: FontWeight.w300,
+              fontSize: 17.5,
+            )
+        ),
+        children: checkedDurationMap.keys.map((keys) =>
+            FilterDurationList(title: keys, checkedDurationMap: checkedDurationMap)).toList()
     );
   }
 
@@ -1227,9 +1223,9 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: widget.bloc.Newpromotions,
         initialData: UnmodifiableListView<Promotion>([]),
         builder: (context, snapshot) => ListView(
-              scrollDirection: Axis.horizontal,
-              children: snapshot.data.map(_buildListItem).toList(),
-            ));
+          scrollDirection: Axis.horizontal,
+          children: snapshot.data.map(_buildListItem).toList(),
+        ));
   }
 
   Widget _buildHotSection(BuildContext context) {
@@ -1237,9 +1233,9 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: widget.bloc.Hotpromotions,
         initialData: UnmodifiableListView<Promotion>([]),
         builder: (context, snapshot) => ListView(
-              scrollDirection: Axis.horizontal,
-              children: snapshot.data.map(_buildListItem).toList(),
-            ));
+          scrollDirection: Axis.horizontal,
+          children: snapshot.data.map(_buildListItem).toList(),
+        ));
   }
 
   Widget _buildSection(BuildContext context) {
@@ -1247,9 +1243,9 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: widget.bloc.promotions,
         initialData: UnmodifiableListView<Promotion>([]),
         builder: (context, snapshot) => ListView(
-              scrollDirection: Axis.horizontal,
-              children: snapshot.data.map(_buildListItem).toList(),
-            ));
+          scrollDirection: Axis.horizontal,
+          children: snapshot.data.map(_buildListItem).toList(),
+        ));
   }
 
   Widget _buildListItem(Promotion promotion) {
@@ -1264,44 +1260,44 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       child: Padding(
         key: ValueKey(promotion.title),
-        padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 5 , vertical: 0),
         child: Align(
           alignment: Alignment.topCenter,
           child: Container(
+            width: 135,
+            height: 175,
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border.all(color: Colors.grey),
               borderRadius: BorderRadius.circular(10.0),
             ),
             child: Container(
-              width: 140.0,
-              height: 183.0,
               child: Column(children: <Widget>[
                 Container(
-                  height: 140.0,
-                  width: 140.0,
+                  width: 135,
+                  height: 130,
                   decoration: new BoxDecoration(
-                    borderRadius: new BorderRadius.only(
-                      topLeft: const Radius.circular(10.0),
-                      topRight: const Radius.circular(10.0),
-                    ),
-                    image: DecorationImage(
-                      image: NetworkImage(promotion.company.logoURL),
-                      fit: BoxFit.fill,
-                  )),
+                      borderRadius: new BorderRadius.only(
+                        topLeft: const Radius.circular(10.0),
+                        topRight: const Radius.circular(10.0),
+                      ),
+                      image: DecorationImage(
+                        image: NetworkImage(promotion.company.logoURL),
+                        fit: BoxFit.fill,
+                      )),
                 ),
                 Padding(
                   padding: EdgeInsets.all(3.0),
                 ),
                 Container(
-                  width: 100.0,
+                  width: MediaQuery.of(context).size.width*0.28,
                   child: Text(promotion.title,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.roboto(
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black
                       )),
                 ),
               ]),
@@ -1344,9 +1340,9 @@ class PromotionBloc {
 
   final _promotionsSubject = BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _NewpromotionsSubject =
-      BehaviorSubject<UnmodifiableListView<Promotion>>();
+  BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _HotpromotionsSubject =
-      BehaviorSubject<UnmodifiableListView<Promotion>>();
+  BehaviorSubject<UnmodifiableListView<Promotion>>();
   final _typesSubject = BehaviorSubject<UnmodifiableListView<Type>>();
   final _companySubject = BehaviorSubject<UnmodifiableListView<Company>>();
 
@@ -1362,19 +1358,19 @@ class PromotionBloc {
 
   Future<Null> _updatePromotions() async {
     final promotionQShot =
-        await Firestore.instance.collection('web_promotion').getDocuments();
+    await Firestore.instance.collection('web_promotion').getDocuments();
     final NewpromotionQShot = await Firestore.instance
         .collection('web_promotion')
-        .orderBy('dateAdded', descending: false)
+        .orderBy('dateAdded', descending: true)
         .getDocuments();
     final HotpromotionQShot = await Firestore.instance
         .collection('web_promotion')
         .orderBy('clicks', descending: true)
         .getDocuments();
     final companyQShot =
-        await Firestore.instance.collection('web_companies').getDocuments();
+    await Firestore.instance.collection('web_companies').getDocuments();
     final typeQShot =
-        await Firestore.instance.collection('web_type').getDocuments();
+    await Firestore.instance.collection('web_type').getDocuments();
 
     companyQShot.documents.forEach((doc) {
       List<String> location = [];
@@ -1420,28 +1416,28 @@ class PromotionBloc {
 
     _Newpromotions = NewpromotionQShot.documents
         .map((doc) => Promotion(
-            doc.data['title'],
-            _companies[doc.data['company']],
-            doc.data['start_date'],
-            doc.data['end_date'],
-            doc.data['types'].map((type) => _types[type]).toList(),
-            List<String>.from(doc.data['comments']),
-            doc.data['dislikes'],
-            doc.data['likes'],
-            doc.data['clicks']))
+        doc.data['title'],
+        _companies[doc.data['company']],
+        doc.data['start_date'],
+        doc.data['end_date'],
+        doc.data['types'].map((type) => _types[type]).toList(),
+        List<String>.from(doc.data['comments']),
+        doc.data['dislikes'],
+        doc.data['likes'],
+        doc.data['clicks']))
         .toList();
 
     _Hotpromotions = HotpromotionQShot.documents
         .map((doc) => Promotion(
-            doc.data['title'],
-            _companies[doc.data['company']],
-            doc.data['start_date'],
-            doc.data['end_date'],
-            doc.data['types'].map((type) => _types[type]).toList(),
-            List<String>.from(doc.data['comments']),
-            doc.data['dislikes'],
-            doc.data['likes'],
-            doc.data['clicks']))
+        doc.data['title'],
+        _companies[doc.data['company']],
+        doc.data['start_date'],
+        doc.data['end_date'],
+        doc.data['types'].map((type) => _types[type]).toList(),
+        List<String>.from(doc.data['comments']),
+        doc.data['dislikes'],
+        doc.data['likes'],
+        doc.data['clicks']))
         .toList();
   }
 }
@@ -1468,7 +1464,7 @@ class Promotion {
         .get()
         .then((docSnapshot) {
       List<String> clickedBefore =
-          List<String>.from(docSnapshot.data["clickedBefore"]);
+      List<String>.from(docSnapshot.data["clickedBefore"]);
       if (clickedBefore.contains(this.title)) {
         //don't add
       } else {
@@ -1560,7 +1556,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
       promourl = "";
     }
     final snapShot2 =
-        await Firestore.instance.collection('all_users').document(userid).get();
+    await Firestore.instance.collection('all_users').document(userid).get();
     if (snapShot2 == null || !snapShot2.exists) {
       Firestore.instance
           .collection("all_users")
@@ -1595,10 +1591,10 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
 
     Future<void> share() async {
       await FlutterShare.share(
-        title: args.title,
-        text: url != "" ? "Don't miss out on this promotion: " +
-            args.title +  ". For more information, visit " + url + "." :
-            "Don't miss out on this promotion: " + args.title + '.'
+          title: args.title,
+          text: url != "" ? "Don't miss out on this promotion: " +
+              args.title +  ". For more information, visit " + url + "." :
+          "Don't miss out on this promotion: " + args.title + '.'
 //          linkUrl: 'https://flutter.dev/',
 //          chooserTitle: 'Example Chooser Title'
       );
@@ -1607,7 +1603,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
     // Adding a promotion
     // Check if userid is in database, if it is not, add userid
     // Add promotion id
-    void addpromo() async {
+    Future<bool> addpromo() async {
+      bool promoAdded = false;
       List<DateTime> dates = new List();
       final snapShot = await Firestore.instance
           .collection('all_users')
@@ -1620,43 +1617,81 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
         });
       } else {
         // If userid exists
-        Firestore.instance.collection('all_users').document(userid).updateData({
-          'saved_promotion': FieldValue.arrayUnion([args.title])
-        });
+        List<String> saved_promotion = await Firestore.instance.collection('all_users').
+            document(userid).get().then((docSnapshot) {return List<String>.from(docSnapshot.data['saved_promotion']);});
+        if (saved_promotion.contains(args.title)) {
+          //do nothing
+          promoAdded = true;
+        } else {
+          await Firestore.instance.collection('all_users')
+              .document(userid)
+              .updateData({
+            'saved_promotion': FieldValue.arrayUnion([args.title])
+          });
+        }
       }
-      final DocumentSnapshot ds = await Firestore.instance
-          .collection('web_promotion')
-          .document(args.title)
-          .get();
-      String promostart = ds.data['start_date'];
-      String promoend = ds.data['end_date'];
-      DateTime startdate = new DateTime(
-          int.parse(promostart.substring(6)),
-          int.parse(promostart.substring(3, 5)),
-          int.parse(promostart.substring(0, 2)));
-      DateTime enddate = new DateTime(
-          int.parse(promoend.substring(6)),
-          int.parse(promoend.substring(3, 5)),
-          int.parse(promoend.substring(0, 2)));
-      if (startdate.isBefore(enddate)) {
-        _MyHomePageState()
-            ._showstartNotification(args.title, args.title, startdate);
-        _MyHomePageState()
-            ._showendNotification(args.title, args.title, enddate);
-      } else {
-        _MyHomePageState()
-            ._showstartNotification(args.title, args.title, startdate);
-        _MyHomePageState()
-            ._showendNotification(args.title, args.title, enddate);
+
+      if (!promoAdded) {
+        final DocumentSnapshot ds = await Firestore.instance
+            .collection('web_promotion')
+            .document(args.title)
+            .get();
+        String promostart = ds.data['start_date'];
+        String promoend = ds.data['end_date'];
+        DateTime startdate = new DateTime(
+            int.parse(promostart.substring(6)),
+            int.parse(promostart.substring(3, 5)),
+            int.parse(promostart.substring(0, 2)));
+        DateTime enddate = new DateTime(
+            int.parse(promoend.substring(6)),
+            int.parse(promoend.substring(3, 5)),
+            int.parse(promoend.substring(0, 2)));
+        //Promo is one day
+        if (!startdate.isBefore(enddate)) {
+          _MyHomePageState()._showstartNotification(
+              args.title, args.title, startdate);
+        }
+        //Promo more than one day
+        else if (startdate.isBefore(enddate)) {
+          //If saved before promo starts
+          if (DateTime.now().isBefore(startdate)) {
+            _MyHomePageState()
+                ._showstartNotification(args.title, args.title, startdate);
+            _MyHomePageState()
+                ._showendNotification(args.title, args.title, enddate);
+          }
+          // If saved after promo starts
+          else {
+            _MyHomePageState()
+                ._showendNotification(args.title, args.title, enddate);
+          }
+        }
       }
+      return Future.value(promoAdded);
     }
 
+
     // Deleting a promotion
-    void deletepromo() async {
-      Firestore.instance.collection("all_users").document(userid).updateData({
-        'saved_promotion': FieldValue.arrayRemove([args.title])
-      });
-      _MyHomePageState()._deleteNotification(args.title);
+    Future<bool> deletepromo() async {
+      bool promoExists = true;
+      await Firestore.instance.collection("all_users").document(userid).get().then(
+        (docSnapshot) {
+          if (docSnapshot.data['saved_promotion'].contains(args.title)) {
+            Firestore.instance.collection("all_users").document(userid).updateData({
+              'saved_promotion' : FieldValue.arrayRemove([args.title])
+            });
+            _MyHomePageState()._deleteNotification(args.title);
+          } else {
+            promoExists = false;
+          }
+        }
+      );
+      return Future.value(promoExists);
+
+//      updateData({
+//        'saved_promotion': FieldValue.arrayRemove([args.title])
+//      });
+//      _MyHomePageState()._deleteNotification(args.title);
     }
 
     void updatepromo() async {
@@ -1722,11 +1757,11 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
             child: Text(
               "No location data available",
               style: GoogleFonts.roboto(
-                fontWeight: FontWeight.w300,
-                fontSize: 16,
-                textStyle: TextStyle(
-                  color: Colors.black
-                )
+                  fontWeight: FontWeight.w300,
+                  fontSize: 16,
+                  textStyle: TextStyle(
+                      color: Colors.black
+                  )
               ),
             )));
       } else {
@@ -1735,10 +1770,10 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
               padding: EdgeInsets.only(left: 20, right: 20, top: 10),
               child: Center(
                   child: Text(
-                "• " + location,
-                style: TextStyle(color: Colors.black),
-                textAlign: TextAlign.center,
-              ))));
+                    "• " + location,
+                    style: TextStyle(color: Colors.black),
+                    textAlign: TextAlign.center,
+                  ))));
         }
         locations.add(Padding(
           padding: EdgeInsets.only(bottom: 20),
@@ -1754,19 +1789,30 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
             IconButton(
               //EDIT HERE FOR ADD
               icon: Icon(Icons.add, color: Colors.white),
-              onPressed: () {
-                addpromo();
-                Toast.show("Promotion added to calendar", context,
+              onPressed: () async{
+                bool promoAdded = await addpromo();
+                if (promoAdded) {
+                  Toast.show("Promotion already added to calendar", context,
                     duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                } else {
+                  Toast.show("Promotion added to calendar", context,
+                      duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                }
               },
             ),
             IconButton(
                 icon: Icon(Icons.delete, color: Colors.white),
-                onPressed: () {
-                  deletepromo();
-                  Toast.show("Promotion deleted from calendar", context,
-                      duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
-                  Navigator.pushNamed(context, MyHomePage.routeName);
+                onPressed: () async {
+                  bool promoExists = await deletepromo();
+                  if (promoExists) {
+                    Toast.show("Promotion deleted from calendar", context,
+                        duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                    Navigator.of(context).pushNamedAndRemoveUntil('/homePage', (Route<dynamic> route) => false);
+//                    Navigator.pushNamed(context, MyHomePage.routeName);
+                  } else {
+                    Toast.show("This promotion is not saved", context,
+                        duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                  }
                 }),
           ],
         ),
@@ -1796,8 +1842,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                           borderRadius: BorderRadius.circular(20),
                           child: Image.network(
                             args.company.logoURL,
-                            height: 330,
-                            width: 330,
+                            height: MediaQuery.of(context).size.width*0.8,
+                            width: MediaQuery.of(context).size.width*0.8,
                           ),
                         ),
                       ),
@@ -1832,7 +1878,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                         SizedBox(height: 5, width: 10),
                         IconButton(
                           icon:
-                              Icon(Icons.thumb_down, color: dislikeiconcolour),
+                          Icon(Icons.thumb_down, color: dislikeiconcolour),
                           onPressed: () {
                             if (!disliked && !liked) {
                               setState(() {
@@ -1879,7 +1925,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                         SizedBox(height: 5, width: 5),
                         IconButton(
                           icon:
-                              Icon(Icons.open_in_browser, color: Colors.black),
+                          Icon(Icons.open_in_browser, color: Colors.black),
                           iconSize: 30,
                           onPressed: () {
                             _launchURL();
@@ -1891,8 +1937,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                         children: <Widget>[
                           Container(
                             padding: EdgeInsets.all(5),
-                            height: 80,
-                            width: 175,
+                            height: MediaQuery.of(context).size.height*0.12,
+                            width: MediaQuery.of(context).size.width*0.42,
                             child: Card(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -1910,11 +1956,11 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                           style: GoogleFonts.roboto(
                                               fontWeight: FontWeight.w700)),
                                       TextSpan(text: args.start_date,
-                                        style: GoogleFonts.roboto(
-                                          textStyle: TextStyle(
-                                            fontWeight: FontWeight.w300,
+                                          style: GoogleFonts.roboto(
+                                              textStyle: TextStyle(
+                                                fontWeight: FontWeight.w300,
+                                              )
                                           )
-                                        )
                                       ),
                                     ],
                                   ),
@@ -1924,8 +1970,8 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                           ),
                           Container(
                             padding: EdgeInsets.all(5),
-                            height: 80,
-                            width: 175,
+                            height: MediaQuery.of(context).size.height*0.12,
+                            width: MediaQuery.of(context).size.width*0.42,
                             child: Card(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -1941,14 +1987,14 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                       TextSpan(
                                           text: 'End Date' + '\n',
                                           style: GoogleFonts.roboto(
-                                      fontWeight: FontWeight.w700)),
+                                              fontWeight: FontWeight.w700)),
                                       TextSpan(text: args.end_date,
-                                        style: GoogleFonts.roboto(
-                                          textStyle: TextStyle(
-                                            color: Colors.black
-                                          ),
-                                          fontWeight: FontWeight.w300,
-                                        )
+                                          style: GoogleFonts.roboto(
+                                            textStyle: TextStyle(
+                                                color: Colors.black
+                                            ),
+                                            fontWeight: FontWeight.w300,
+                                          )
                                       ),
                                     ],
                                   ),
@@ -1960,15 +2006,14 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                       ),
                       Container(
                         padding: EdgeInsets.all(5),
-                        height: 80,
-                        width: 350,
+                        width: MediaQuery.of(context).size.width*0.84,
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                           color: Colors.teal[200],
                           child: Padding(
-                            padding: EdgeInsets.only(left: 15, top: 8),
+                            padding: EdgeInsets.only(left: 15, top: 8, bottom: 8),
                             child: RichText(
                               text: TextSpan(
                                 style: TextStyle(
@@ -1977,12 +2022,12 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                                   TextSpan(
                                       text: 'Company' + '\n',
                                       style: GoogleFonts.roboto(
-                                        fontWeight: FontWeight.w700
+                                          fontWeight: FontWeight.w700
                                       )),
                                   TextSpan(text: args.company.title,
-                                    style: GoogleFonts.roboto(
-                                      fontWeight: FontWeight.w300,
-                                    )
+                                      style: GoogleFonts.roboto(
+                                        fontWeight: FontWeight.w300,
+                                      )
                                   ),
                                 ],
                               ),
@@ -1993,7 +2038,7 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                       Container(
                         padding: EdgeInsets.only(
                             left: 5, right: 5, top: 5, bottom: 30),
-                        width: 350,
+                        width: MediaQuery.of(context).size.width*0.84,
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -2002,11 +2047,11 @@ class ExtractPromoDetailsState extends State<ExtractPromoDetails> {
                           child: ExpansionTile(
                             title: Text('Locations',
                                 style: GoogleFonts.roboto(
-                                  textStyle: TextStyle(
-                                    color: Colors.black
-                                  ),
-                                  fontSize: 19.0,
-                                  fontWeight: FontWeight.w700
+                                    textStyle: TextStyle(
+                                        color: Colors.black
+                                    ),
+                                    fontSize: 19.0,
+                                    fontWeight: FontWeight.w700
                                 )),
                             children: displaylocations(),
                           ),

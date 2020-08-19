@@ -59,10 +59,31 @@ class PromotionSearch extends SearchDelegate<Promotion> {
       stream: promotions,
       builder: (context, AsyncSnapshot<UnmodifiableListView<Promotion>> snapshot) {
         if (!snapshot.hasData) {
-          return Center(
-            child: Text('No Data!',
-              style: TextStyle(color: Colors.black),
-            ),
+          return Container(
+              height: double.infinity,
+              width: double.infinity,
+              color: Colors.teal[100],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(
+                      height: 90,
+                      width: 90,
+                      child: Image(
+                          image: AssetImage("assets/kinda_filled_beaver.png")
+                      )
+                  ),
+                  Text(
+                      'No Data',
+                      style: GoogleFonts.roboto(
+                        textStyle: TextStyle(color: Colors.grey[850]),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                      )
+                  )
+                ],
+              )
           );
         }
 
