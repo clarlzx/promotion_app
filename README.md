@@ -1,16 +1,12 @@
-# promotionapp
+# Beaver
 
-A new Flutter application.
+A Flutter application.
 
-## Getting Started
+An app that showcases promotions available and allows users to be reminded when their favourite promotions are available.
 
-This project is a starting point for a Flutter application.
+This app was down under the Orbital programme by NUS School of Computing. As part of the programme, the app was developed in 3 milestones.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## README for each milestone
+* Milestone 1: https://docs.google.com/document/d/1HR5h53QnVa21AOfjilzngpdaK6RRKSVYJLyEwVuYcGU/edit?usp=sharing
+* Milestone 2: https://docs.google.com/document/d/1PUnV25v9rtp0iE1wIpeRS-Z9SsGDqO83cJQPyF8wxiQ/edit?usp=sharing
+* Milestone 3: https://docs.google.com/document/d/1c3vfrz0btFlV_q2YxMFbnxhePEz2PN5vkIgPRZCxbJk/edit?usp=sharing
